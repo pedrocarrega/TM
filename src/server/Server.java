@@ -93,7 +93,6 @@ public class Server {
 			transmiters.get(userId).add(socket.getRemoteSocketAddress().toString());
 			counter.replace(userId, counter.get(userId)+1);
 			
-			
 			return result;
 		}
 
@@ -106,6 +105,18 @@ public class Server {
 			}
 
 			return sb.toString();
+		}
+		
+		//assumindo k user é o ip:port de alguem que esta a assistir
+		private void removeClient(int host, String user) {
+			List<String> users = transmiters.get(host);
+			users.remove(user);
+			counter.replace(host, counter.get(host)-1);
+		}
+		
+		private void removeHost(int user) {
+			transmiters.remove(user);
+			counter.remove(user);
 		}
 		
 	}
