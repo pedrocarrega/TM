@@ -21,7 +21,7 @@ public class Server {
 
 		testFillMaps();
 		Server server = new Server();
-		server.startServer(args[1]);
+		server.startServer(args[0]);
 		
 
 	}
@@ -29,12 +29,12 @@ public class Server {
 	private static void testFillMaps() {
 		
 		List<String> test = new ArrayList<String>();
-		test.add("300");
+		test.add("300:600");
 
 
 		transmiters.put(12345, test);
 		counter.put(12345, 0);
-		test.add("666");
+		test.add("666:300");
 		transmiters.put(54321, test);
 		counter.put(54321, 0);
 		
@@ -71,11 +71,13 @@ public class Server {
 				
 				stream = (String)inStream.readObject();
 				
-				while(stream == null) {}
+				while(stream == null) {} //e preciso?
 				
 				outStream.writeObject(connectTo(stream));				
 				
 				socket.close();
+				outStream.close();
+				inStream.close();
 			} catch (IOException | ClassNotFoundException e) {
 				e.printStackTrace();
 			}
