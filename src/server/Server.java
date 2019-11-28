@@ -63,7 +63,7 @@ public class Server {
 		public void run() {
 			try {
 				if(socket.getPort() == 8000) {
-
+					//ligacao entre servidores
 				}
 				String stream = null;
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
@@ -88,6 +88,7 @@ public class Server {
 				case 3:
 					String info = (String)inStream.readObject();
 					removeClient(info);
+					break;
 
 				default:
 					break;
