@@ -30,14 +30,11 @@ public class Server {
 	private static void testFillMaps() {
 
 		List<String> test = new ArrayList<String>();
-		test.add("300:600");
+		test.add("666:666");
 
 
 		transmiters.put(12345, test);
 		counter.put(12345, 0);
-		test.add("666:300");
-		transmiters.put(54321, test);
-		counter.put(54321, 0);
 
 	}
 
@@ -126,7 +123,7 @@ public class Server {
 			return sb.toString();
 		}
 
-		//assumindo k user é "ip:port" de alguem que esta a assistir
+		//assumindo k user == "ip:port" de alguem que esta a assistir
 		private void removeClient(String info) {
 			String[] data = info.split("S//+");
 
@@ -147,18 +144,19 @@ public class Server {
 		private void addHost(ObjectInputStream in, ObjectOutputStream out) throws ClassNotFoundException, IOException {
 			int userId = (int)in.readObject();
 			boolean unique = uniqueUser(userId);
-
-			while(unique) {
+			
+			while(!unique) {
 				out.writeObject(-1);
 				userId = (int)in.readObject();
 				unique = uniqueUser(userId);
 			}
 
 			List<String> ips = new ArrayList<String>();
-			ips.add(socket.getRemoteSocketAddress().toString());
+			ips.add(socket.getRemoteSocketAddress().toString().substring(1));
+			System.out.println("result: " + ips.get(0));
 			transmiters.put(userId, ips);
 			counter.put(userId, 0);
-			out.writeObject(1);
+			out.writeObject(socket.getPort()); //devolve o port do client??
 		}
 
 		private boolean uniqueUser(int userId) {
