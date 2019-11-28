@@ -126,7 +126,7 @@ public class Server {
 			return sb.toString();
 		}
 
-		//assumindo k user é o ip:port de alguem que esta a assistir
+		//assumindo k user é "ip:port" de alguem que esta a assistir
 		private void removeClient(String info) {
 			String[] data = info.split("S//+");
 
