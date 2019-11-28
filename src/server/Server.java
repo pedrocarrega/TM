@@ -73,7 +73,6 @@ public class Server {
 					outStream.writeObject(getStreams());
 
 					stream = (String)inStream.readObject();
-					while(stream == null) {} //e preciso?
 
 					outStream.writeObject(connectTo(stream));
 					break;
