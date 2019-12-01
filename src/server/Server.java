@@ -5,16 +5,17 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class Server {
+	
+	private final static int DEFAULT_CAPACITY = 12;
 
-	private static Map<Integer, List<String>> transmiters = new HashMap<Integer, List<String>>();
-	private static Map<Integer, Integer> counter = new HashMap<Integer, Integer>();
+	private static Map<Integer, ArrayBlockingQueue<String>> transmiters = new HashMap<Integer, ArrayBlockingQueue<String>>();
+	//private static Map<Integer, Integer> counter = new HashMap<Integer, Integer>();
 
 
 	public static void main(String[] args) throws IOException {
@@ -29,12 +30,11 @@ public class Server {
 
 	private static void testFillMaps() {
 
-		List<String> test = new ArrayList<String>();
+		ArrayBlockingQueue<String> test = new ArrayBlockingQueue<>(DEFAULT_CAPACITY, true);
 		test.add("666:666");
 
 
 		transmiters.put(12345, test);
-		counter.put(12345, 0);
 
 	}
 
@@ -102,11 +102,10 @@ public class Server {
 
 			int userId = Integer.parseInt(stream);
 
-			List<String> ips = transmiters.get(userId);
-
-			String result = ips.get(counter.get(userId));
-			transmiters.get(userId).add(socket.getRemoteSocketAddress().toString()+":"+(socket.getPort()+1));
-			counter.replace(userId, counter.get(userId)+1);
+			ArrayBlockingQueue<String> ips = transmiters.get(userId);
+			String result = ips.remove();
+			ips.add(socket.getRemoteSocketAddress().toString().substring(1));
+			ips.add(result);
 
 			return result;
 		}
@@ -115,7 +114,7 @@ public class Server {
 
 			StringBuilder sb = new StringBuilder();
 
-			for(Entry<Integer, List<String>> entry : transmiters.entrySet()) {
+			for(Entry<Integer, ArrayBlockingQueue<String>> entry : transmiters.entrySet()) {
 				sb.append(entry.getKey() + "\n");
 			}
 
@@ -126,9 +125,8 @@ public class Server {
 		private void removeClient(String info) {
 			String[] data = info.split("S//+");
 
-			List<String> users = transmiters.get(Integer.parseInt(data[0]));
+			ArrayBlockingQueue<String> users = transmiters.get(Integer.parseInt(data[0]));
 			users.remove(data[1]);
-			counter.replace(Integer.parseInt(data[0]), counter.get(Integer.parseInt(data[0]))-1);
 
 		}
 
@@ -150,11 +148,10 @@ public class Server {
 				unique = uniqueUser(userId);
 			}
 
-			List<String> ips = new ArrayList<String>();
+			ArrayBlockingQueue<String> ips = new ArrayBlockingQueue<String>(DEFAULT_CAPACITY, true);
 			ips.add(socket.getRemoteSocketAddress().toString().substring(1));
-			System.out.println("result: " + ips.get(0));
+			System.out.println("result: " + ips.peek());
 			transmiters.put(userId, ips);
-			counter.put(userId, 0);
 			out.writeObject(socket.getPort()); //devolve o port do client??
 		}
 
