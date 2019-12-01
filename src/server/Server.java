@@ -107,10 +107,13 @@ public class Server {
 			try {
 				ips.add(result);
 			}catch(IllegalStateException e) {
-				ArrayBlockingQueue<String> temp = new ArrayBlockingQueue<>(ips.size()*2, true);
-				ips.drainTo(temp);
-				temp.add(result);
-				ips=temp;
+				synchronized (ips) {
+					ArrayBlockingQueue<String> temp = new ArrayBlockingQueue<>(ips.size()*2, true);
+					ips.drainTo(temp);
+					temp.add(result);
+					ips=temp;
+				}
+
 			}
 
 			return result;
