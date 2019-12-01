@@ -11,12 +11,10 @@ import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class Server {
-	
+
 	private final static int DEFAULT_CAPACITY = 12;
 
 	private static Map<Integer, ArrayBlockingQueue<String>> transmiters = new HashMap<Integer, ArrayBlockingQueue<String>>();
-	//private static Map<Integer, Integer> counter = new HashMap<Integer, Integer>();
-
 
 	public static void main(String[] args) throws IOException {
 
@@ -100,12 +98,20 @@ public class Server {
 
 		private String connectTo(String stream) {
 
+
 			int userId = Integer.parseInt(stream);
 
 			ArrayBlockingQueue<String> ips = transmiters.get(userId);
 			String result = ips.remove();
 			ips.add(socket.getRemoteSocketAddress().toString().substring(1));
-			ips.add(result);
+			try {
+				ips.add(result);
+			}catch(IllegalStateException e) {
+				ArrayBlockingQueue<String> temp = new ArrayBlockingQueue<>(ips.size()*2, true);
+				ips.drainTo(temp);
+				temp.add(result);
+				ips=temp;
+			}
 
 			return result;
 		}
@@ -136,12 +142,12 @@ public class Server {
 			transmiters.remove(user);
 			counter.remove(user);
 		}
-		*/
+		 */
 
 		private void addHost(ObjectInputStream in, ObjectOutputStream out) throws ClassNotFoundException, IOException {
 			int userId = (int)in.readObject();
 			boolean unique = uniqueUser(userId);
-			
+
 			while(!unique) {
 				out.writeObject(-1);
 				userId = (int)in.readObject();
@@ -150,7 +156,6 @@ public class Server {
 
 			ArrayBlockingQueue<String> ips = new ArrayBlockingQueue<String>(DEFAULT_CAPACITY, true);
 			ips.add(socket.getRemoteSocketAddress().toString().substring(1));
-			System.out.println("result: " + ips.peek());
 			transmiters.put(userId, ips);
 			out.writeObject(socket.getPort()); //devolve o port do client??
 		}
