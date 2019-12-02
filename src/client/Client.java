@@ -2,6 +2,7 @@ package client;
 
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -13,9 +14,11 @@ import java.util.ArrayList;
 
 public class Client {
 
+	private static final long TIME_BETWEEN_FRAMES = 1500;
+	private static final int BUFFER_SIZE = 5;
 	private static List<String> clients;
 
-	public static void main(String[] args) throws NumberFormatException, UnknownHostException, ClassNotFoundException, IOException {
+	public static void main(String[] args) throws NumberFormatException, UnknownHostException, ClassNotFoundException, IOException, InterruptedException {
 
 		Scanner sc = new Scanner(System.in);
 		System.out.println("1 - Watch Stream\n2 - Host Stream \nChoose your action: ");
@@ -28,7 +31,7 @@ public class Client {
 
 	}
 
-	private static void connectServer(String ip, int port, int action, Scanner sc) throws UnknownHostException, IOException, ClassNotFoundException{
+	private static void connectServer(String ip, int port, int action, Scanner sc) throws UnknownHostException, IOException, ClassNotFoundException, NumberFormatException, InterruptedException{
 
 
 		switch (action) {
@@ -45,23 +48,37 @@ public class Client {
 		}
 	}
 
-	private static void connectStream(String host) throws NumberFormatException, UnknownHostException, IOException, ClassNotFoundException {
+	private static void connectStream(String host) throws NumberFormatException, UnknownHostException, IOException, ClassNotFoundException, InterruptedException {
 
 		String[] info = host.split(":");
+		ArrayBlockingQueue<byte[]> buffer = new ArrayBlockingQueue<>(BUFFER_SIZE);
 		
 
 		Socket socket = new Socket(info[0], Integer.parseInt(info[1]));
 		//ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 		ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 		clients = new ArrayList<String>();
+		
+		Runnable r = () -> {
+			try {
+				Thread.sleep(TIME_BETWEEN_FRAMES);
+				System.out.println(buffer.remove().length);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		};
+		
+		Thread t = new Thread(r);
+		t.start();
 
 		LocalTime timer = LocalTime.now();
 
 		while(LocalTime.now().getSecond()-timer.getSecond()<45) {
-			byte[] stuff = (byte[])inStream.readObject();
-			System.out.println("Size: " + stuff.length);
+			buffer.put((byte[])inStream.readObject());
 		}
 
+		t.join();
 		socket.close();
 		inStream.close();
 
