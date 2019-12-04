@@ -1,8 +1,10 @@
 package client;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.stream.IntStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -16,12 +18,27 @@ public class Client {
 
 	private static final long TIME_BETWEEN_FRAMES = 1500;
 	private static final int BUFFER_SIZE = 5;
-	private static List<String> clients;
+	private static final int TTL = 15;
+	private static List<Socket> clients;
+	private Map<Integer, List<String>> tabela;
+	private static final int MAX_CLIENT_SIZE = 30;
 
 	public static void main(String[] args) throws NumberFormatException, UnknownHostException, ClassNotFoundException, IOException, InterruptedException {
 
 		Scanner sc = new Scanner(System.in);
-		System.out.println("1 - Watch Stream\n2 - Host Stream \nChoose your action: ");
+		//System.out.println("1 - Watch Stream\n2 - Host Stream \nChoose your action: ");
+		String initialIp = args[0];
+		String initialPort = args[1];
+
+		IntStream.range(0, 30).parallel().forEach((int i) -> {
+			try {
+				randomWalk(initialIp, initialPort);
+			} catch (NumberFormatException | ClassNotFoundException | IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
+
 		int input = Integer.parseInt(sc.nextLine());
 
 		if(1 <= input && input <= 3)
@@ -30,6 +47,42 @@ public class Client {
 			System.err.println("INVALID ACTION");
 
 	}
+
+	private static void randomWalk(String ip, String port) throws NumberFormatException, UnknownHostException, IOException, ClassNotFoundException {
+		Socket socket = new Socket(ip, Integer.parseInt(port));
+		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
+
+		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalAddress().toString().substring(1));
+
+
+
+		String[] info = (socket.getLocalAddress().toString().substring(1)).split(":");
+
+		socket.close();
+		outStream.close();
+
+		ServerSocket server = new ServerSocket(Integer.parseInt(info[1]));
+		Socket newSocket = server.accept();
+
+		boolean result = true;
+
+		synchronized (clients) {
+
+			for(Socket compare : clients) {
+				String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
+
+				if(info[0].equals(something[0])) {
+					result = false;
+					break;
+				}
+			}
+
+			if(result)
+				clients.add(newSocket);
+		}
+	}
+
+
 
 	private static void connectServer(String ip, int port, int action, Scanner sc) throws UnknownHostException, IOException, ClassNotFoundException, NumberFormatException, InterruptedException{
 
@@ -52,23 +105,27 @@ public class Client {
 
 		String[] info = host.split(":");
 		ArrayBlockingQueue<byte[]> buffer = new ArrayBlockingQueue<>(BUFFER_SIZE);
-		
+
 
 		Socket socket = new Socket(info[0], Integer.parseInt(info[1]));
 		//ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 		ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
-		clients = new ArrayList<String>();
-		
+		//clients = new ArrayList<String>();
+
 		Runnable r = () -> {
 			try {
-				Thread.sleep(TIME_BETWEEN_FRAMES);
-				System.out.println(buffer.remove().length);
+				while(true) {
+					Thread.sleep(TIME_BETWEEN_FRAMES);
+					if(buffer.isEmpty()) {
+						System.out.println(buffer.remove().length);
+					}
+				}
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		};
-		
+
 		Thread t = new Thread(r);
 		t.start();
 
@@ -91,18 +148,18 @@ public class Client {
 		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 		ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 		outStream.writeObject(action);
-		
+
 		String opcoes = (String) inStream.readObject();
 		System.out.println("\n" + opcoes);
 
-		System.out.println("Escreva o canal que pretende visualizar das opções acima listadas: ");
+		System.out.println("Escreva o canal que pretende visualizar das opcoes acima listadas: ");
 
 		String opcao = sc.nextLine();
 
 		outStream.writeObject(opcao);
 		String result = (String) inStream.readObject();
 		System.out.println(result);
-		
+
 		socket.close();
 		outStream.close();
 		inStream.close();
@@ -116,55 +173,56 @@ public class Client {
 
 		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 		ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
-		
+
 		outStream.writeObject(action);
 		System.out.println("Indique o seu userId: ");
 
 		int userId = Integer.parseInt(sc.nextLine());
-		
+
 		outStream.writeObject(userId);
-		
+
 		int result = (int) inStream.readObject();
-		
+
 		while (result == -1) {
 			System.out.println("UserId nao unico, indique outro: ");
 
 			userId = Integer.parseInt(sc.nextLine());
-			
+
 			outStream.writeObject(userId);
-			
+
 			result = (int) inStream.readObject();
 		}
 
 		socket.close();
 		outStream.close();
 		inStream.close();
-		
+
 		return result;
-		
+
 	}
-	
+
 	private static void stream(String ip, int port, int action, Scanner sc) throws UnknownHostException, IOException, ClassNotFoundException {
 		int sPort = warnServer(ip, port, action, sc);
-		
+
 		System.out.println("Port: " + sPort);
-		
+
 		Client client = new Client();
 		client.startServer(sPort);
 
 	}
-	
+
 	private void startServer(int port) throws IOException {
 
 		@SuppressWarnings("resource")
 		ServerSocket socket = new ServerSocket(port);
+		socket.accept();
 
 		while(true) {
 			new SimpleServer(socket.accept()).start();
 		}
 
 	}
-	
+
 	class SimpleServer extends Thread{
 
 		private Socket socket = null;
@@ -175,18 +233,47 @@ public class Client {
 
 		public void run() {
 			try {
-				
+
+				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
-				
+
+				String[] info = ((String)inStream.readObject()).split(",");
+
+				if(info[0].equals("RandomWalk"))
+					if(clients.size() < MAX_CLIENT_SIZE) {
+						String[] address = info[2].split(":");
+						Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
+						
+						boolean result = true;
+						
+						synchronized (clients) {
+
+							for(Socket compare : clients) {
+								String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
+
+								if(address[0].equals(something[0])) {
+									result = false;
+									break;
+								}
+							}
+
+							if(result)
+								clients.add(newVizinho);
+								System.out.println("tenho fome"); 
+								
+					
+						}
+					}
+
 				LocalTime timer = LocalTime.now();
-				
+
 				while((LocalTime.now().getSecond()-timer.getSecond())<30) 
 					outStream.writeObject(new byte[1500]);
 
 				socket.close();
 				outStream.close();
-				
-			} catch (IOException e) {
+
+			} catch (IOException | ClassNotFoundException e) {
 				e.printStackTrace();
 			}
 		}
