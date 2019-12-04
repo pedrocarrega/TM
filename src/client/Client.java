@@ -32,7 +32,7 @@ public class Client {
 			String initialIp = args[0];
 			String initialPort = args[1];
 
-			IntStream.range(0, 30).parallel().forEach((int i) -> {
+			IntStream.range(0, 30).forEach((int i) -> {
 				try {
 					randomWalk(initialIp, initialPort);
 				} catch (NumberFormatException | ClassNotFoundException | IOException e) {
@@ -61,8 +61,9 @@ public class Client {
 		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalAddress().toString().substring(1));
 
 
-
-		String[] info = (socket.getLocalAddress().toString().substring(1)).split(":");
+		
+		String[] info = (socket.getRemoteSocketAddress().toString().substring(1)).split(":");
+		System.out.println(socket.getRemoteSocketAddress().toString());
 
 		socket.close();
 		outStream.close();
@@ -87,6 +88,7 @@ public class Client {
 						break;
 					}*/
 				clients.add(newSocket);
+				System.out.println("entrou");
 				//}
 
 				/*if(result)
