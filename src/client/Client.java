@@ -2,6 +2,7 @@ package client;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.stream.IntStream;
@@ -38,13 +39,16 @@ public class Client {
 				e.printStackTrace();
 			}
 		});
-
+		
+		Client client = new Client();
+		client.startServer(sPort);
+		/*
 		int input = Integer.parseInt(sc.nextLine());
 
 		if(1 <= input && input <= 3)
 			connectServer(args[0], Integer.parseInt(args[1]), input, sc);
 		else
-			System.err.println("INVALID ACTION");
+			System.err.println("INVALID ACTION");*/
 
 	}
 
@@ -63,23 +67,39 @@ public class Client {
 
 		ServerSocket server = new ServerSocket(Integer.parseInt(info[1]));
 		Socket newSocket = server.accept();
+		ObjectInputStream in = new ObjectInputStream(newSocket.getInputStream());
+		
+		int response = (int)in.readObject();
 
-		boolean result = true;
+		if(response == 1) {
+			
+			//boolean result = true;
 
-		synchronized (clients) {
+			synchronized (clients) {
 
-			for(Socket compare : clients) {
-				String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
+				/*for(Socket compare : clients) {
+					String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
 
-				if(info[0].equals(something[0])) {
-					result = false;
-					break;
-				}
+					if(info[0].equals(something[0])) {
+						result = false;
+						break;
+					}*/
+					clients.add(newSocket);
+				//}
+
+				/*if(result)
+					clients.add(newSocket);*/
 			}
-
-			if(result)
-				clients.add(newSocket);
+		}else {
+			System.out.println("Errors");
 		}
+		
+		newSocket.close();
+		in.close();
+		server.close();
+				
+		
+		
 	}
 
 
@@ -239,10 +259,12 @@ public class Client {
 
 				String[] info = ((String)inStream.readObject()).split(",");
 
-				if(info[0].equals("RandomWalk"))
+				if(info[0].equals("RandomWalk")) {
+					String[] address = info[2].split(":");
 					if(clients.size() < MAX_CLIENT_SIZE) {
-						String[] address = info[2].split(":");
+						
 						Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
+						
 						
 						boolean result = true;
 						
@@ -257,13 +279,31 @@ public class Client {
 								}
 							}
 
-							if(result)
+							if(result) {
 								clients.add(newVizinho);
 								System.out.println("tenho fome"); 
-								
+							}
 					
 						}
+					}else {
+						int ttl = Integer.parseInt(info[1]) - 1;
+						if(ttl > 0) {
+							Random r = new Random();
+							Socket reencaminhar = clients.get(r.nextInt(clients.size()));
+							ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
+							out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalAddress().toString().substring(1));
+						}else {
+							Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
+							ObjectOutputStream out = new ObjectOutputStream(newVizinho.getOutputStream());
+							
+							out.writeObject(-1);
+							
+							newVizinho.close();
+							out.close();
+						}
+						
 					}
+				}
 
 				LocalTime timer = LocalTime.now();
 
