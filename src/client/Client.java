@@ -41,7 +41,7 @@ public class Client {
 		});
 		
 		Client client = new Client();
-		client.startServer(sPort);
+		client.startServer(12345);
 		/*
 		int input = Integer.parseInt(sc.nextLine());
 
@@ -264,7 +264,6 @@ public class Client {
 					if(clients.size() < MAX_CLIENT_SIZE) {
 						
 						Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
-						
 						
 						boolean result = true;
 						
