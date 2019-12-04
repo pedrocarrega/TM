@@ -26,19 +26,21 @@ public class Client {
 
 	public static void main(String[] args) throws NumberFormatException, UnknownHostException, ClassNotFoundException, IOException, InterruptedException {
 
-		Scanner sc = new Scanner(System.in);
+		//Scanner sc = new Scanner(System.in);
 		//System.out.println("1 - Watch Stream\n2 - Host Stream \nChoose your action: ");
 		String initialIp = args[0];
 		String initialPort = args[1];
 
-		IntStream.range(0, 30).parallel().forEach((int i) -> {
-			try {
-				randomWalk(initialIp, initialPort);
-			} catch (NumberFormatException | ClassNotFoundException | IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		});
+		if(initialIp != null) {
+			IntStream.range(0, 30).parallel().forEach((int i) -> {
+				try {
+					randomWalk(initialIp, initialPort);
+				} catch (NumberFormatException | ClassNotFoundException | IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			});
+		}
 		
 		Client client = new Client();
 		client.startServer(12345);
