@@ -42,8 +42,11 @@ public class Client {
 			});
 		}
 
-		Client client = new Client();
-		client.startServer(12345);
+		//Client client = new Client();
+		//client.startServer(12345);
+		SimpleServer server = new SimpleServer(12345);
+		server.start();
+		
 		/*
 		int input = Integer.parseInt(sc.nextLine());
 
@@ -53,6 +56,7 @@ public class Client {
 			System.err.println("INVALID ACTION");*/
 
 	}
+	
 
 	private static void randomWalk(String ip, String port) throws NumberFormatException, UnknownHostException, IOException, ClassNotFoundException {
 		Socket socket = new Socket(ip, Integer.parseInt(port));
@@ -237,87 +241,87 @@ public class Client {
 
 	private void startServer(int port) throws IOException {
 
-		@SuppressWarnings("resource")
-		ServerSocket socket = new ServerSocket(port);
-		socket.accept();
-
-		while(true) {
-			new SimpleServer(socket.accept()).start();
-		}
-
+		SimpleServer server = new SimpleServer(port);
+		server.start();
+		
+		System.out.println("asdasdasdasfsdfds");
 	}
 
-	class SimpleServer extends Thread{
+	static class SimpleServer extends Thread implements Runnable{
 
-		private Socket socket = null;
+		private ServerSocket socket = null;
 
-		public SimpleServer(Socket accept) {
-			this.socket = accept;
+		public SimpleServer(int port) {
+			try {
+				this.socket = new ServerSocket(port);
+			} catch (IOException e) {
+				System.out.println("Erro na criacao da server socket");
+			}
 		}
 
+		@Override
 		public void run() {
-			try {
 
-				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
-				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
+			Socket socketAceite;
+			while(true) {
+				try {
+					if((socketAceite = this.socket.accept()) != null) {
+						
+						ObjectInputStream inStream = new ObjectInputStream(socketAceite.getInputStream());
+						ObjectOutputStream outStream = new ObjectOutputStream(socketAceite.getOutputStream());
 
-				String[] info = ((String)inStream.readObject()).split(",");
+						String[] info = ((String)inStream.readObject()).split(",");
 
-				if(info[0].equals("RandomWalk")) {
-					String[] address = info[2].split(":");
-					if(clients.size() < MAX_CLIENT_SIZE) {
+						if(info[0].equals("RandomWalk")) {
+							String[] address = info[2].split(":");
+							if(clients.size() < MAX_CLIENT_SIZE) {
 
-						Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
+								Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
 
-						boolean result = true;
+								boolean result = true;
 
-						synchronized (clients) {
+								synchronized (clients) {
 
-							for(Socket compare : clients) {
-								String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
+									for(Socket compare : clients) {
+										String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
 
-								if(address[0].equals(something[0])) {
-									result = false;
-									break;
+										if(address[0].equals(something[0])) {
+											result = false;
+											break;
+										}
+									}
+
+									if(result) {
+										clients.add(newVizinho);
+										System.out.println("tenho fome"); 
+									}
+
 								}
+							}else {
+								int ttl = Integer.parseInt(info[1]) - 1;
+								if(ttl > 0) {
+									Random r = new Random();
+									Socket reencaminhar = clients.get(r.nextInt(clients.size()));
+									ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
+									out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalAddress().toString().substring(1));
+								}else {
+									Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
+									ObjectOutputStream out = new ObjectOutputStream(newVizinho.getOutputStream());
+
+									out.writeObject(-1);
+
+									newVizinho.close();
+									out.close();
+								}
+
 							}
-
-							if(result) {
-								clients.add(newVizinho);
-								System.out.println("tenho fome"); 
-							}
-
 						}
-					}else {
-						int ttl = Integer.parseInt(info[1]) - 1;
-						if(ttl > 0) {
-							Random r = new Random();
-							Socket reencaminhar = clients.get(r.nextInt(clients.size()));
-							ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
-							out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalAddress().toString().substring(1));
-						}else {
-							Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
-							ObjectOutputStream out = new ObjectOutputStream(newVizinho.getOutputStream());
-
-							out.writeObject(-1);
-
-							newVizinho.close();
-							out.close();
-						}
-
+						
 					}
+				} catch (IOException | ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-
-				LocalTime timer = LocalTime.now();
-
-				while((LocalTime.now().getSecond()-timer.getSecond())<30) 
-					outStream.writeObject(new byte[1500]);
-
-				socket.close();
-				outStream.close();
-
-			} catch (IOException | ClassNotFoundException e) {
-				e.printStackTrace();
 			}
 		}
 	}
