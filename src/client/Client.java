@@ -124,12 +124,25 @@ public class Client {
 
 	private static void randomWalk(String ip, String port) throws NumberFormatException, UnknownHostException, IOException, ClassNotFoundException {
 
-		Socket socket;
+		Socket socket = null;
+		boolean result = true;
 
 		synchronized (clients) {
+			for(Socket compare : clients) {
+				String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
+
+				if(ip.equals(something[0])) {
+					socket = compare;
+					result = false;
+					break;
+				}
+			}
 
 		}
-		socket = new Socket(ip, Integer.parseInt(port));
+		if(result) {
+			socket = new Socket(ip, Integer.parseInt(port));
+		}
+		
 		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 
 		System.out.println(socket.getLocalSocketAddress().toString().substring(1));
