@@ -35,6 +35,7 @@ public class Client {
 
 			IntStream.range(0, 30).forEach((int i) -> {
 				try {
+					System.out.println("random: " + i);
 					randomWalk(initialIp, initialPort);
 				} catch (NumberFormatException | ClassNotFoundException | IOException e) {
 					e.printStackTrace();
@@ -128,6 +129,7 @@ public class Client {
 		boolean result = true;
 
 		synchronized (clients) {
+			
 			for(Socket compare : clients) {
 				String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
 
@@ -149,10 +151,8 @@ public class Client {
 
 		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
 
-		int portS = socket.getLocalPort();
+		int portS = socket.getLocalPort()+1;
 		
-		String[] info = (socket.getRemoteSocketAddress().toString().substring(1)).split(":");
-
 		socket.close();
 		outStream.close();
 
@@ -267,16 +267,17 @@ public class Client {
 						boolean result = true;
 						String[] address = info[2].split(":");
 						if(clients.size() < MAX_CLIENT_SIZE) {
-
+							
 							System.out.println(address[0] + " " + Integer.parseInt(address[1]));
-							Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
+							Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+1);
 
 
 
 							synchronized (clients) {
 
 								for(Socket compare : clients) {
-									String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
+									String[] something = (compare.getRemoteSocketAddress().toString().substring(1)).split(":");
+									System.out.println("Address: " + address[0] + " Compare: " + something[0]);
 
 									if(address[0].equals(something[0])) {
 										result = false;
@@ -286,10 +287,12 @@ public class Client {
 
 								if(result) {
 									clients.add(newVizinho);
+									
 									System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
-									ObjectOutputStream outStream = new ObjectOutputStream(socketAceite.getOutputStream());
+									ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
 									outStream.writeObject(1);
-									outStream.close();
+									//outStream.close();
+									System.out.println("Close: " + newVizinho.isClosed());
 								}
 
 							}
@@ -335,6 +338,8 @@ public class Client {
 			boolean run = true;
 
 			while(run) {
+				
+				System.out.println("GAS GAS GAS");
 
 				for(Socket socket : clients) {
 					ObjectInputStream in;
