@@ -149,13 +149,14 @@ public class Client {
 
 		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
 
-
+		int portS = socket.getLocalPort();
+		
 		String[] info = (socket.getRemoteSocketAddress().toString().substring(1)).split(":");
 
 		socket.close();
 		outStream.close();
 
-		ServerSocket server = new ServerSocket(Integer.parseInt(info[1]));
+		ServerSocket server = new ServerSocket(portS);
 		Socket newSocket = server.accept();
 		ObjectInputStream in = new ObjectInputStream(newSocket.getInputStream());
 
