@@ -21,12 +21,12 @@ public class Client {
 	private static final int BUFFER_SIZE = 5;
 	private static final int TTL = 15;
 	private static List<Socket> clients;
-	private Map<Integer, List<String>> tabela;
+	private static Map<Integer, List<String>> tabela;
 	private static final int MAX_CLIENT_SIZE = 30;
 
 	public static void main(String[] args) throws NumberFormatException, UnknownHostException, ClassNotFoundException, IOException, InterruptedException {
 
-		//Scanner sc = new Scanner(System.in);
+		Scanner sc = new Scanner(System.in);
 		//System.out.println("1 - Watch Stream\n2 - Host Stream \nChoose your action: ");
 		if(args.length > 0) {
 			String initialIp = args[0];
@@ -46,6 +46,47 @@ public class Client {
 		//client.startServer(12345);
 		SimpleServer server = new SimpleServer(12345);
 		server.start();
+		String comando;
+		while(!(comando = sc.nextLine()).equals("exit")) {
+			if(comando.equals("Visualizar")) {
+				
+			}
+			switch(comando) {
+			  case "Visualizar":
+				System.out.println("Escolha umdos seguintes canais");
+			    imprimeStreams();
+			    boolean verifierVisualiza = true;
+			    while(verifierVisualiza) {
+				    String escolhaVis = sc.nextLine();
+				    if(tabela.containsKey(Integer.parseInt(escolhaVis))){
+				    	visualizarStream(Integer.parseInt(escolhaVis));
+				    	verifierVisualiza = false;
+				    	 System.out.println("Esta a assistir ao canal " + escolhaVis);
+				    }else {
+				    	System.out.println("Insira um canal válido");
+				    }
+			    }
+			    break;
+			  case "Transmitir":
+			    System.out.println("Insira um ID unico para o seu canal");
+			    boolean verifierTransmission = true;
+			    while(verifierTransmission) {
+			    	String escolhaId = sc.nextLine();
+			    	if(!tabela.containsKey(Integer.parseInt(escolhaId))) {
+			    		startTransmission(Integer.parseInt(escolhaId));
+			    		verifierTransmission = false;
+			    	}else {
+			    		System.out.println("Id de canal já está em uso, tente de novo");
+			    	}
+			    }
+			    break;
+			  default:
+			    System.out.println("Imprima um dos Seguintes comandos:");
+			    System.out.println("Visualizar");
+			    System.out.println("Transmitir");
+			}
+		}
+		
 		
 		/*
 		int input = Integer.parseInt(sc.nextLine());
@@ -57,6 +98,26 @@ public class Client {
 
 	}
 	
+
+	private static void startTransmission(int idCanalTrans) {
+		// TODO Terá de iniciar uma thread para a tranmissao caso necessário e fazer gossip a avisar que está a tranmitir esta stream
+		
+	}
+
+
+	private static void visualizarStream(int idCanalVis) {
+		// TODO Criar uma ligação ao ip que estah na lista tabela e pedir para ele nos transmitir a stream
+	}
+
+
+	private static void imprimeStreams() {
+		
+		for(Integer i : tabela.keySet()) {
+			System.out.println(i);
+		}
+		
+	}
+
 
 	private static void randomWalk(String ip, String port) throws NumberFormatException, UnknownHostException, IOException, ClassNotFoundException {
 		Socket socket = new Socket(ip, Integer.parseInt(port));
