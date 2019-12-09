@@ -1,5 +1,6 @@
 package client;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -13,7 +14,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.time.LocalTime;
-import java.util.ArrayList;
 
 public class Client {
 
@@ -28,6 +28,7 @@ public class Client {
 
 		Scanner sc = new Scanner(System.in);
 		//System.out.println("1 - Watch Stream\n2 - Host Stream \nChoose your action: ");
+		clients = new ArrayList<>();
 		if(args.length > 0) {
 			String initialIp = args[0];
 			String initialPort = args[1];
@@ -36,7 +37,6 @@ public class Client {
 				try {
 					randomWalk(initialIp, initialPort);
 				} catch (NumberFormatException | ClassNotFoundException | IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			});
@@ -49,45 +49,47 @@ public class Client {
 		String comando;
 		while(!(comando = sc.nextLine()).equals("exit")) {
 			if(comando.equals("Visualizar")) {
-				
+
 			}
 			switch(comando) {
-			  case "Visualizar":
+			case "Visualizar":
 				System.out.println("Escolha umdos seguintes canais");
-			    imprimeStreams();
-			    boolean verifierVisualiza = true;
-			    while(verifierVisualiza) {
-				    String escolhaVis = sc.nextLine();
-				    if(tabela.containsKey(Integer.parseInt(escolhaVis))){
-				    	visualizarStream(Integer.parseInt(escolhaVis));
-				    	verifierVisualiza = false;
-				    	 System.out.println("Esta a assistir ao canal " + escolhaVis);
-				    }else {
-				    	System.out.println("Insira um canal v�lido");
-				    }
-			    }
-			    break;
-			  case "Transmitir":
-			    System.out.println("Insira um ID unico para o seu canal");
-			    boolean verifierTransmission = true;
-			    while(verifierTransmission) {
-			    	String escolhaId = sc.nextLine();
-			    	if(!tabela.containsKey(Integer.parseInt(escolhaId))) {
-			    		startTransmission(Integer.parseInt(escolhaId));
-			    		verifierTransmission = false;
-			    	}else {
-			    		System.out.println("Id de canal j� est� em uso, tente de novo");
-			    	}
-			    }
-			    break;
-			  default:
-			    System.out.println("Imprima um dos Seguintes comandos:");
-			    System.out.println("Visualizar");
-			    System.out.println("Transmitir");
+				imprimeStreams();
+				boolean verifierVisualiza = true;
+				while(verifierVisualiza) {
+					String escolhaVis = sc.nextLine();
+					if(tabela.containsKey(Integer.parseInt(escolhaVis))){
+						visualizarStream(Integer.parseInt(escolhaVis));
+						verifierVisualiza = false;
+						System.out.println("Esta a assistir ao canal " + escolhaVis);
+					}else {
+						System.out.println("Insira um canal valido");
+					}
+				}
+				break;
+			case "Transmitir":
+				System.out.println("Insira um ID unico para o seu canal");
+				boolean verifierTransmission = true;
+				while(verifierTransmission) {
+					String escolhaId = sc.nextLine();
+					if(!tabela.containsKey(Integer.parseInt(escolhaId))) {
+						startTransmission(Integer.parseInt(escolhaId));
+						verifierTransmission = false;
+					}else {
+						System.out.println("Id de canal ja esta em uso, tente de novo");
+					}
+				}
+				break;
+			default:
+				System.out.println("Imprima um dos Seguintes comandos:");
+				System.out.println("Visualizar");
+				System.out.println("Transmitir");
 			}
 		}
-		
-		
+
+		sc.close();
+
+
 		/*
 		int input = Integer.parseInt(sc.nextLine());
 
@@ -97,11 +99,11 @@ public class Client {
 			System.err.println("INVALID ACTION");*/
 
 	}
-	
+
 
 	private static void startTransmission(int idCanalTrans) {
 		// TODO Ter� de iniciar uma thread para a tranmissao caso necess�rio e fazer gossip a avisar que est� a tranmitir esta stream
-		
+
 	}
 
 
@@ -111,22 +113,26 @@ public class Client {
 
 
 	private static void imprimeStreams() {
-		
+
 		for(Integer i : tabela.keySet()) {
 			System.out.println(i);
 		}
-		
+
 	}
 
 
 	private static void randomWalk(String ip, String port) throws NumberFormatException, UnknownHostException, IOException, ClassNotFoundException {
 		Socket socket = new Socket(ip, Integer.parseInt(port));
 		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
+		
+		System.out.println(socket.getLocalSocketAddress().toString().substring(1));
+
+		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
+		System.out.println();
 
 		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
 
 
-		
 		String[] info = (socket.getRemoteSocketAddress().toString().substring(1)).split(":");
 		System.out.println(socket.getRemoteSocketAddress().toString().substring(1));
 
@@ -304,7 +310,7 @@ public class Client {
 
 		SimpleServer server = new SimpleServer(port);
 		server.start();
-		
+
 		System.out.println("asdasdasdasfsdfds");
 	}
 
@@ -326,63 +332,68 @@ public class Client {
 			Socket socketAceite;
 			while(true) {
 				try {
-					if((socketAceite = this.socket.accept()) != null) {
-						
-						ObjectInputStream inStream = new ObjectInputStream(socketAceite.getInputStream());
-						ObjectOutputStream outStream = new ObjectOutputStream(socketAceite.getOutputStream());
+					socketAceite = this.socket.accept();
 
-						String[] info = ((String)inStream.readObject()).split(",");
+					System.out.println("ligou");
 
-						if(info[0].equals("RandomWalk")) {
-							String[] address = info[2].split(":");
-							if(clients.size() < MAX_CLIENT_SIZE) {
+					ObjectInputStream inStream = new ObjectInputStream(socketAceite.getInputStream());
+					ObjectOutputStream outStream = new ObjectOutputStream(socketAceite.getOutputStream());
 
-								Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
+					String[] info = ((String)inStream.readObject()).split(",");
+					//System.out.println(info[2]);
 
-								boolean result = true;
+					if(info[0].equals("RandomWalk")) {
+						String[] address = info[2].split(":");
+						if(clients.size() < MAX_CLIENT_SIZE) {
 
-								synchronized (clients) {
+							//System.out.println(address[0] + " " + Integer.parseInt(address[1]));
+							//Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
 
-									for(Socket compare : clients) {
-										String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
+							boolean result = true;
 
-										if(address[0].equals(something[0])) {
-											result = false;
-											break;
-										}
+							synchronized (clients) {
+
+								for(Socket compare : clients) {
+									String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
+
+									if(address[0].equals(something[0])) {
+										result = false;
+										break;
 									}
-
-									if(result) {
-										clients.add(newVizinho);
-										System.out.println("tenho fome"); 
-									}
-
 								}
-							}else {
-								int ttl = Integer.parseInt(info[1]) - 1;
-								if(ttl > 0) {
-									Random r = new Random();
-									Socket reencaminhar = clients.get(r.nextInt(clients.size()));
-									ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
-									out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalAddress().toString().substring(1));
-								}else {
-									Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
-									ObjectOutputStream out = new ObjectOutputStream(newVizinho.getOutputStream());
 
-									out.writeObject(-1);
-
-									newVizinho.close();
-									out.close();
+								if(result) {
+									clients.add(socketAceite);
+									System.out.println("tenho fome: " + socketAceite.getRemoteSocketAddress().toString().substring(1)); 
 								}
 
 							}
+						}else {
+							int ttl = Integer.parseInt(info[1]) - 1;
+							if(ttl > 0) {
+								Random r = new Random();
+								Socket reencaminhar = clients.get(r.nextInt(clients.size()));
+								ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
+								out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalSocketAddress().toString().substring(1));
+							}else {
+								//Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
+								//ObjectOutputStream out = new ObjectOutputStream(newVizinho.getOutputStream());
+
+								outStream.writeObject(-1);
+
+								socketAceite.close();
+								outStream.close();
+								inStream.close();
+							}
+
 						}
-						
+
 					}
 				} catch (IOException | ClassNotFoundException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+
 			}
 		}
 	}
