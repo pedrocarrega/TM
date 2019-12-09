@@ -63,7 +63,7 @@ public class Client {
 				    	verifierVisualiza = false;
 				    	 System.out.println("Esta a assistir ao canal " + escolhaVis);
 				    }else {
-				    	System.out.println("Insira um canal válido");
+				    	System.out.println("Insira um canal vï¿½lido");
 				    }
 			    }
 			    break;
@@ -76,7 +76,7 @@ public class Client {
 			    		startTransmission(Integer.parseInt(escolhaId));
 			    		verifierTransmission = false;
 			    	}else {
-			    		System.out.println("Id de canal já está em uso, tente de novo");
+			    		System.out.println("Id de canal jï¿½ estï¿½ em uso, tente de novo");
 			    	}
 			    }
 			    break;
@@ -100,13 +100,13 @@ public class Client {
 	
 
 	private static void startTransmission(int idCanalTrans) {
-		// TODO Terá de iniciar uma thread para a tranmissao caso necessário e fazer gossip a avisar que está a tranmitir esta stream
+		// TODO Terï¿½ de iniciar uma thread para a tranmissao caso necessï¿½rio e fazer gossip a avisar que estï¿½ a tranmitir esta stream
 		
 	}
 
 
 	private static void visualizarStream(int idCanalVis) {
-		// TODO Criar uma ligação ao ip que estah na lista tabela e pedir para ele nos transmitir a stream
+		// TODO Criar uma ligaï¿½ï¿½o ao ip que estah na lista tabela e pedir para ele nos transmitir a stream
 	}
 
 
@@ -123,12 +123,12 @@ public class Client {
 		Socket socket = new Socket(ip, Integer.parseInt(port));
 		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 
-		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalAddress().toString().substring(1));
+		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
 
 
 		
 		String[] info = (socket.getRemoteSocketAddress().toString().substring(1)).split(":");
-		System.out.println(socket.getRemoteSocketAddress().toString());
+		System.out.println(socket.getRemoteSocketAddress().toString().substring(1));
 
 		socket.close();
 		outStream.close();
