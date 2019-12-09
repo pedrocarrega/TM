@@ -27,7 +27,7 @@ public class Client {
 	public static void main(String[] args) throws NumberFormatException, UnknownHostException, ClassNotFoundException, IOException, InterruptedException {
 
 		Scanner sc = new Scanner(System.in);
-		//System.out.println("1 - Watch Stream\n2 - Host Stream \nChoose your action: ");
+		System.out.println("1 - Watch Stream\n2 - Host Stream \nChoose your action: ");
 		clients = new ArrayList<>();
 		if(args.length > 0) {
 			String initialIp = args[0];
@@ -128,13 +128,9 @@ public class Client {
 		System.out.println(socket.getLocalSocketAddress().toString().substring(1));
 
 		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
-		System.out.println();
-
-		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
 
 
 		String[] info = (socket.getRemoteSocketAddress().toString().substring(1)).split(":");
-		System.out.println(socket.getRemoteSocketAddress().toString().substring(1));
 
 		socket.close();
 		outStream.close();
@@ -167,33 +163,13 @@ public class Client {
 			}
 		}else {
 			System.out.println("Errors");
-		}
-
-		newSocket.close();
+			newSocket.close();
 		in.close();
 		server.close();
-
-
-
-	}
-
-
-
-	private static void connectServer(String ip, int port, int action, Scanner sc) throws UnknownHostException, IOException, ClassNotFoundException, NumberFormatException, InterruptedException{
-
-
-		switch (action) {
-		case 1:
-			String host = getHost(ip, port, action, sc);
-			if(host != null)
-				connectStream(host);
-			break;
-
-		case 2:
-			stream(ip, port, action, sc);
-			break;
-
 		}
+
+		
+
 	}
 
 	private static void connectStream(String host) throws NumberFormatException, UnknownHostException, IOException, ClassNotFoundException, InterruptedException {
@@ -236,84 +212,6 @@ public class Client {
 
 	}
 
-	private static String getHost(String ip, int port, int action, Scanner sc) throws ClassNotFoundException, IOException {
-
-		Socket socket = new Socket(ip, port);
-
-		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
-		ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
-		outStream.writeObject(action);
-
-		String opcoes = (String) inStream.readObject();
-		System.out.println("\n" + opcoes);
-
-		System.out.println("Escreva o canal que pretende visualizar das opcoes acima listadas: ");
-
-		String opcao = sc.nextLine();
-
-		outStream.writeObject(opcao);
-		String result = (String) inStream.readObject();
-		System.out.println(result);
-
-		socket.close();
-		outStream.close();
-		inStream.close();
-
-		return result;
-
-	}	
-
-	private static int warnServer(String ip, int port, int action, Scanner sc) throws IOException, ClassNotFoundException {
-		Socket socket = new Socket(ip, port);
-
-		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
-		ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
-
-		outStream.writeObject(action);
-		System.out.println("Indique o seu userId: ");
-
-		int userId = Integer.parseInt(sc.nextLine());
-
-		outStream.writeObject(userId);
-
-		int result = (int) inStream.readObject();
-
-		while (result == -1) {
-			System.out.println("UserId nao unico, indique outro: ");
-
-			userId = Integer.parseInt(sc.nextLine());
-
-			outStream.writeObject(userId);
-
-			result = (int) inStream.readObject();
-		}
-
-		socket.close();
-		outStream.close();
-		inStream.close();
-
-		return result;
-
-	}
-
-	private static void stream(String ip, int port, int action, Scanner sc) throws UnknownHostException, IOException, ClassNotFoundException {
-		int sPort = warnServer(ip, port, action, sc);
-
-		System.out.println("Port: " + sPort);
-
-		Client client = new Client();
-		client.startServer(sPort);
-
-	}
-
-	private void startServer(int port) throws IOException {
-
-		SimpleServer server = new SimpleServer(port);
-		server.start();
-
-		System.out.println("asdasdasdasfsdfds");
-	}
-
 	static class SimpleServer extends Thread implements Runnable{
 
 		private ServerSocket socket = null;
@@ -337,19 +235,22 @@ public class Client {
 					System.out.println("ligou");
 
 					ObjectInputStream inStream = new ObjectInputStream(socketAceite.getInputStream());
-					ObjectOutputStream outStream = new ObjectOutputStream(socketAceite.getOutputStream());
+					
 
 					String[] info = ((String)inStream.readObject()).split(",");
 					//System.out.println(info[2]);
+					socketAceite.close();
+					inStream.close();
 
 					if(info[0].equals("RandomWalk")) {
+						boolean result = true;
 						String[] address = info[2].split(":");
 						if(clients.size() < MAX_CLIENT_SIZE) {
 
 							//System.out.println(address[0] + " " + Integer.parseInt(address[1]));
-							//Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
+							Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
 
-							boolean result = true;
+							
 
 							synchronized (clients) {
 
@@ -363,26 +264,31 @@ public class Client {
 								}
 
 								if(result) {
-									clients.add(socketAceite);
-									System.out.println("tenho fome: " + socketAceite.getRemoteSocketAddress().toString().substring(1)); 
+									clients.add(newVizinho);
+									System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
+									ObjectOutputStream outStream = new ObjectOutputStream(socketAceite.getOutputStream());
+									outStream.writeObject(1);
+									outStream.close();
 								}
 
 							}
-						}else {
+						}
+						if(!result || clients.size() >= MAX_CLIENT_SIZE) {
 							int ttl = Integer.parseInt(info[1]) - 1;
 							if(ttl > 0) {
 								Random r = new Random();
 								Socket reencaminhar = clients.get(r.nextInt(clients.size()));
 								ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
 								out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalSocketAddress().toString().substring(1));
+								out.close();
 							}else {
-								//Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
-								//ObjectOutputStream out = new ObjectOutputStream(newVizinho.getOutputStream());
+								Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
+								ObjectOutputStream out = new ObjectOutputStream(newVizinho.getOutputStream());
 
-								outStream.writeObject(-1);
+								out.writeObject(-1);
 
-								socketAceite.close();
-								outStream.close();
+								newVizinho.close();
+								out.close();
 								inStream.close();
 							}
 
@@ -390,7 +296,6 @@ public class Client {
 
 					}
 				} catch (IOException | ClassNotFoundException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 
