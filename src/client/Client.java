@@ -20,9 +20,11 @@ public class Client {
 	private static final long TIME_BETWEEN_FRAMES = 1500;
 	private static final int BUFFER_SIZE = 5;
 	private static final int TTL = 15;
+	private static List<Socket> viewers;
 	private static List<Socket> clients;
 	private static Map<Integer, List<String>> tabela;
 	private static final int MAX_CLIENT_SIZE = 30;
+	private static final int THREASHOLD_VIZINHOS = 5;
 
 	public static void main(String[] args) throws NumberFormatException, UnknownHostException, ClassNotFoundException, IOException, InterruptedException {
 
@@ -329,6 +331,14 @@ public class Client {
 
 	}
 
+	/*
+	 * Usado para comunicaçao entre sockets que ja estao abertas
+	 * ou seja random walks com alguem que já foi adicionado aos vizinhos
+	 * ou entao para receber gossip dos vizinhos e saber propaga-lo
+	 * Tamebm tem de incluir os casos em que a pessoa que ira assistir
+	 * ah nossa stream ja seja nossa vizinha e use essa socket para 
+	 * nos pedir para o adicionar à lista de viewers da stream
+	 */
 	private static class Listen extends Thread implements Runnable{
 
 		public Listen() {}
@@ -422,4 +432,35 @@ public class Client {
 			}
 		}
 	}
+	
+	private static class Transmit extends Thread implements Runnable{
+		
+		private char[] arrToTransmit;
+
+		public Transmit(char[] arr) {
+			viewers = new ArrayList<>();
+			arrToTransmit = arr;
+		}
+
+		@Override
+		public void run() {
+			
+			for(char c : arrToTransmit) {
+				for(Socket viewer : viewers) {
+					try {
+						ObjectOutputStream out = new ObjectOutputStream(viewer.getOutputStream());
+						out.writeChar(c);//nao sei se eh suposto usar writeObj
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				try {
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
 }
