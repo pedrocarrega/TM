@@ -43,13 +43,13 @@ public class Client {
 					e.printStackTrace();
 				}
 			});
+		}else { //isto?
+			SimpleServer server = new SimpleServer(12345);
+			server.start();
 		}
-
-		//Client client = new Client();
-		//client.startServer(12345);
-		SimpleServer server = new SimpleServer(12345);
-		server.start();
+		
 		Listen listen = new Listen();
+		listen.start();
 		String comando;
 		while(!(comando = sc.nextLine()).equals("exit")) {
 			if(comando.equals("Visualizar")) {
@@ -57,7 +57,7 @@ public class Client {
 			}
 			switch(comando) {
 			case "Visualizar":
-				System.out.println("Escolha umdos seguintes canais");
+				System.out.println("Escolha um dos seguintes canais");
 				imprimeStreams();
 				boolean verifierVisualiza = true;
 				while(verifierVisualiza) {
@@ -445,23 +445,23 @@ public class Client {
 
 		@Override
 		public void run() {
-			
-			for(char c : arrToTransmit) {
-				for(Socket viewer : viewers) {
-					try {
-						ObjectOutputStream out = new ObjectOutputStream(viewer.getOutputStream());
-						out.writeChar(c);//nao sei se eh suposto usar writeObj
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
+
+			arrToTransmit[0]++;
+
+			for(Socket viewer : viewers) {
 				try {
-					Thread.sleep(50);
-				} catch (InterruptedException e) {
+					ObjectOutputStream out = new ObjectOutputStream(viewer.getOutputStream());
+					out.writeObject(arrToTransmit); //precisas de enviar 1000 bytes
+				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
-	
+
 }
