@@ -43,13 +43,13 @@ public class Client {
 					e.printStackTrace();
 				}
 			});
+		}else { //isto?
+			SimpleServer server = new SimpleServer(12345);
+			server.start();
 		}
-
-		//Client client = new Client();
-		//client.startServer(12345);
-		SimpleServer server = new SimpleServer(12345);
-		server.start();
+		
 		Listen listen = new Listen();
+		listen.start();
 		String comando;
 		while(!(comando = sc.nextLine()).equals("exit")) {
 			if(comando.equals("Visualizar")) {
@@ -57,7 +57,7 @@ public class Client {
 			}
 			switch(comando) {
 			case "Visualizar":
-				System.out.println("Escolha umdos seguintes canais");
+				System.out.println("Escolha um dos seguintes canais");
 				imprimeStreams();
 				boolean verifierVisualiza = true;
 				while(verifierVisualiza) {
@@ -131,7 +131,7 @@ public class Client {
 		boolean result = true;
 
 		synchronized (clients) {
-			
+
 			for(Socket compare : clients) {
 				String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
 
@@ -146,7 +146,7 @@ public class Client {
 		if(result) {
 			socket = new Socket(ip, Integer.parseInt(port));
 		}
-		
+
 		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 
 		System.out.println(socket.getLocalSocketAddress().toString().substring(1));
@@ -154,7 +154,7 @@ public class Client {
 		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
 
 		int portS = socket.getLocalPort()+1;
-		
+
 		socket.close();
 		outStream.close();
 
@@ -269,7 +269,7 @@ public class Client {
 						boolean result = true;
 						String[] address = info[2].split(":");
 						if(clients.size() < MAX_CLIENT_SIZE) {
-							
+
 							System.out.println(address[0] + " " + Integer.parseInt(address[1]));
 							Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+1);
 
@@ -289,7 +289,7 @@ public class Client {
 
 								if(result) {
 									clients.add(newVizinho);
-									
+
 									System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
 									ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
 									outStream.writeObject(1);
@@ -348,7 +348,7 @@ public class Client {
 			boolean run = true;
 
 			while(run) {
-				
+
 				System.out.println("GAS GAS GAS");
 
 				for(Socket socket : clients) {
@@ -432,9 +432,9 @@ public class Client {
 			}
 		}
 	}
-	
+
 	private static class Transmit extends Thread implements Runnable{
-		
+
 		private char[] arrToTransmit;
 
 		public Transmit(char[] arr) {
@@ -444,23 +444,23 @@ public class Client {
 
 		@Override
 		public void run() {
-			
-			for(char c : arrToTransmit) {
-				for(Socket viewer : viewers) {
-					try {
-						ObjectOutputStream out = new ObjectOutputStream(viewer.getOutputStream());
-						out.writeChar(c);//nao sei se eh suposto usar writeObj
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
+
+			arrToTransmit[0]++;
+
+			for(Socket viewer : viewers) {
 				try {
-					Thread.sleep(50);
-				} catch (InterruptedException e) {
+					ObjectOutputStream out = new ObjectOutputStream(viewer.getOutputStream());
+					out.writeObject(arrToTransmit); //precisas de enviar 1000 bytes
+				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
-	
+
 }
