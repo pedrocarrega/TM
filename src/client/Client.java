@@ -129,23 +129,27 @@ public class Client {
 
 		Socket socket = null;
 		ObjectOutputStream outStream = null;
+		ObjectInputStream inStream = null;
 		int result = 0;
+		Node nodeTemp = null;
 
 		
 		result = checkIfExists(ip);
 		
 		if(result >= 0) {
-			Node nodeTemp = clients.get(result);
+			nodeTemp = clients.get(result);
 			socket = nodeTemp.getSocket();
 			outStream = nodeTemp.getOut();
 		}else {
-			socket = new Socket(ip, Integer.parseInt(port));
-			outStream = new ObjectOutputStream(socket.getOutputStream());
+			nodeTemp = new Node(new Socket(ip, Integer.parseInt(port)));
+			//socket = new Socket(ip, Integer.parseInt(port));
+			//outStream = new ObjectOutputStream(socket.getOutputStream());
+			//inStream = new ObjectInputStream(socket.getInputStream());
 		}
 
 		System.out.println(socket.getLocalSocketAddress().toString().substring(1));
 
-		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
+		outStream.writeObject("RandomWalk," + TTL + "," + nodeTemp.socket.getLocalSocketAddress().toString().substring(1));
 
 		int portS = socket.getLocalPort()+1;
 		
@@ -277,8 +281,11 @@ public class Client {
 								result = checkIfExists(address[0]);
 								
 								if(result == -1) {
+									System.out.println("Criar objeto");
 									Node newNode = new Node(newVizinho);
+									System.out.println("Adicionar objeto");
 									clients.add(newNode);
+									
 									
 									System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
 									ObjectOutputStream outStream = newNode.getOut();
@@ -381,7 +388,7 @@ public class Client {
 
 								synchronized (clients) {
 
-									if(result >= 0) {
+									if(result == -1) {
 										Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
 										Node nodeAdicionar = new Node(newVizinho);
 										clients.add(nodeAdicionar);
@@ -392,7 +399,7 @@ public class Client {
 
 								}
 							}
-							if((result < 0) || clients.size() >= MAX_CLIENT_SIZE) {
+							if((result >= 0) || clients.size() >= MAX_CLIENT_SIZE) {
 								int ttl = Integer.parseInt(info[1]) - 1;
 								if(ttl > 0) {
 									Random r = new Random();
