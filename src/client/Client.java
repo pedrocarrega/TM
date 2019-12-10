@@ -276,7 +276,7 @@ public class Client {
 
 								result = checkIfExists(address[0]);
 								
-								if(result >= 0) {
+								if(result == -1) {
 									Node newNode = new Node(newVizinho);
 									clients.add(newNode);
 									
@@ -288,7 +288,7 @@ public class Client {
 
 							}
 						}
-						if((result < 0) || clients.size() >= MAX_CLIENT_SIZE) {
+						if((result >= 0) || clients.size() >= MAX_CLIENT_SIZE) {
 							int ttl = Integer.parseInt(info[1]) - 1;
 							if(ttl > 0) {
 								Random r = new Random();
@@ -330,11 +330,13 @@ public class Client {
 				String[] something = (node.getSocket().getRemoteSocketAddress().toString().substring(1)).split(":");
 
 				if(compareIp.equals(something[0])) {
+					System.out.println(counter);
 					return counter;
 				}
 				counter++;
 			}
 		}
+		System.out.println(-1);
 		return -1;
 	}
 
@@ -356,7 +358,7 @@ public class Client {
 
 			while(run) {
 				
-				System.out.println("GAS GAS GAS");
+				//System.out.println("GAS GAS GAS");
 
 				for(Node node : clients) {
 					ObjectInputStream in;
