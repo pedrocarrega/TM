@@ -20,7 +20,7 @@ public class Client {
 	private static final long TIME_BETWEEN_FRAMES = 1500;
 	private static final int BUFFER_SIZE = 5;
 	private static final int TTL = 15;
-	private static List<Socket> viewers;
+	private static List<Node> viewers;
 	private static List<Node> clients;
 	private static Map<Integer, List<String>> tabela;
 	private static final int MAX_CLIENT_SIZE = 30;
@@ -128,16 +128,20 @@ public class Client {
 	private static void randomWalk(String ip, String port) throws NumberFormatException, UnknownHostException, IOException, ClassNotFoundException {
 
 		Socket socket = null;
+		ObjectOutputStream outStream = null;
 		int result = 0;
 
 		
 		result = checkIfExists(ip);
 		
 		if(result >= 0) {
+			Node nodeTemp = clients.get(result);
+			socket = nodeTemp.getSocket();
+			outStream = nodeTemp.getOut();
+		}else {
 			socket = new Socket(ip, Integer.parseInt(port));
+			outStream = new ObjectOutputStream(socket.getOutputStream());
 		}
-		
-		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 
 		System.out.println(socket.getLocalSocketAddress().toString().substring(1));
 
@@ -145,8 +149,10 @@ public class Client {
 
 		int portS = socket.getLocalPort()+1;
 		
-		socket.close();
-		outStream.close();
+		if(result < 0) {
+			socket.close();
+			outStream.close();
+		}
 
 		ServerSocket server = new ServerSocket(portS);
 		Socket newSocket = server.accept();
@@ -448,9 +454,9 @@ public class Client {
 
 			arrToTransmit[0]++;
 
-			for(Socket viewer : viewers) {
+			for(Node nodeViewer : viewers) {
 				try {
-					ObjectOutputStream out = new ObjectOutputStream(viewer.getOutputStream());
+					ObjectOutputStream out = nodeViewer.getOut();
 					out.writeObject(arrToTransmit); //precisas de enviar 1000 bytes
 				} catch (IOException e) {
 					e.printStackTrace();
