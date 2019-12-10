@@ -21,7 +21,7 @@ public class Client {
 	private static final int BUFFER_SIZE = 5;
 	private static final int TTL = 15;
 	private static List<Socket> viewers;
-	private static List<Socket> clients;
+	private static List<Node> clients;
 	private static Map<Integer, List<String>> tabela;
 	private static final int MAX_CLIENT_SIZE = 30;
 	private static final int THREASHOLD_VIZINHOS = 5;
@@ -128,22 +128,12 @@ public class Client {
 	private static void randomWalk(String ip, String port) throws NumberFormatException, UnknownHostException, IOException, ClassNotFoundException {
 
 		Socket socket = null;
-		boolean result = true;
+		int result = 0;
 
-		synchronized (clients) {
-			
-			for(Socket compare : clients) {
-				String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
-
-				if(ip.equals(something[0])) {
-					socket = compare;
-					result = false;
-					break;
-				}
-			}
-
-		}
-		if(result) {
+		
+		result = checkIfExists(ip);
+		
+		if(result >= 0) {
 			socket = new Socket(ip, Integer.parseInt(port));
 		}
 		
@@ -170,14 +160,15 @@ public class Client {
 
 			synchronized (clients) {
 
-				/*for(Socket compare : clients) {
+				/*for(Socket compare : ) {
 					String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
 
 					if(info[0].equals(something[0])) {
 						result = false;
 						break;
 					}*/
-				clients.add(newSocket);
+				clients.add(new Node(newSocket));
+				//clients.add(newSocket);
 				System.out.println("entrou");
 				//}
 
@@ -266,7 +257,7 @@ public class Client {
 					inStream.close();
 
 					if(info[0].equals("RandomWalk")) {
-						boolean result = true;
+						int result = 0;
 						String[] address = info[2].split(":");
 						if(clients.size() < MAX_CLIENT_SIZE) {
 							
@@ -277,34 +268,27 @@ public class Client {
 
 							synchronized (clients) {
 
-								for(Socket compare : clients) {
-									String[] something = (compare.getRemoteSocketAddress().toString().substring(1)).split(":");
-									System.out.println("Address: " + address[0] + " Compare: " + something[0]);
-
-									if(address[0].equals(something[0])) {
-										result = false;
-										break;
-									}
-								}
-
-								if(result) {
-									clients.add(newVizinho);
+								result = checkIfExists(address[0]);
+								
+								if(result >= 0) {
+									Node newNode = new Node(newVizinho);
+									clients.add(newNode);
 									
 									System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
-									ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
+									ObjectOutputStream outStream = newNode.getOut();
 									outStream.writeObject(1);
-									//outStream.close();
 									System.out.println("Close: " + newVizinho.isClosed());
 								}
 
 							}
 						}
-						if(!result || clients.size() >= MAX_CLIENT_SIZE) {
+						if((result < 0) || clients.size() >= MAX_CLIENT_SIZE) {
 							int ttl = Integer.parseInt(info[1]) - 1;
 							if(ttl > 0) {
 								Random r = new Random();
-								Socket reencaminhar = clients.get(r.nextInt(clients.size()));
-								ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
+								Node randomNode = clients.get(r.nextInt(clients.size()));
+								Socket reencaminhar = randomNode.getSocket();
+								ObjectOutputStream out = randomNode.getOut();
 								out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalSocketAddress().toString().substring(1));
 								out.close();
 							}else {
@@ -330,6 +314,23 @@ public class Client {
 
 
 	}
+	
+	private static int checkIfExists(String compareIp) {
+
+		int counter = 0;
+		synchronized (clients) {
+			for(Node node : clients) {
+				
+				String[] something = (node.getSocket().getRemoteSocketAddress().toString().substring(1)).split(":");
+
+				if(compareIp.equals(something[0])) {
+					return counter;
+				}
+				counter++;
+			}
+		}
+		return -1;
+	}
 
 	/*
 	 * Usado para comunicaçao entre sockets que ja estao abertas
@@ -351,10 +352,10 @@ public class Client {
 				
 				System.out.println("GAS GAS GAS");
 
-				for(Socket socket : clients) {
+				for(Node node : clients) {
 					ObjectInputStream in;
 					try {
-						in = new ObjectInputStream(socket.getInputStream());
+						in = node.getIn();
 
 
 						String[] info = ((String)in.readObject()).split(",");
@@ -362,52 +363,52 @@ public class Client {
 						switch (info[0]) {
 						case "RandomWalk":
 
-							boolean result = true;
+							int result = 0;
 							String[] address = info[2].split(":");
+							result  = checkIfExists(address[0]);
+							
 							if(clients.size() < MAX_CLIENT_SIZE) {
 
 								System.out.println(address[0] + " " + Integer.parseInt(address[1]));
 
-
-
 								synchronized (clients) {
 
-									for(Socket compare : clients) {
-										String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
-
-										if(address[0].equals(something[0])) {
-											result = false;
-											break;
-										}
-									}
-
-									if(result) {
+									if(result >= 0) {
 										Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
-										clients.add(newVizinho);
+										Node nodeAdicionar = new Node(newVizinho);
+										clients.add(nodeAdicionar);
 										System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
-										ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
+										ObjectOutputStream outStream = nodeAdicionar.getOut();
 										outStream.writeObject(1);
-										outStream.close();
 									}
 
 								}
 							}
-							if(!result || clients.size() >= MAX_CLIENT_SIZE) {
+							if((result < 0) || clients.size() >= MAX_CLIENT_SIZE) {
 								int ttl = Integer.parseInt(info[1]) - 1;
 								if(ttl > 0) {
 									Random r = new Random();
-									Socket reencaminhar = clients.get(r.nextInt(clients.size()));
-									ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
+									Node randomNode = clients.get(r.nextInt(clients.size()));
+									Socket reencaminhar = randomNode.getSocket();
+									ObjectOutputStream out = randomNode.getOut();
 									out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalSocketAddress().toString().substring(1));
-									out.close();
 								}else {
-									Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
-									ObjectOutputStream out = new ObjectOutputStream(newVizinho.getOutputStream());
+									if(result >= 0) {
+										Node vizinho = clients.get(result);
+										ObjectOutputStream out = vizinho.getOut();
+										out.writeObject(-1);
+									}else {
+										Socket tempSocket = new Socket(address[0], Integer.parseInt(address[1]));
+										ObjectOutputStream out = new ObjectOutputStream(tempSocket.getOutputStream());
+										
+										out.writeObject(-1);
 
-									out.writeObject(-1);
+										tempSocket.close();
+										out.close();
+									}
+									
 
-									newVizinho.close();
-									out.close();
+									
 								}
 
 							}

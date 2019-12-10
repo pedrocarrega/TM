@@ -22,5 +22,17 @@ public class Node {
 		this.in = in;
 		this.out = out;
 	}
+	
+	public ObjectOutputStream getOut() {
+		return out;
+	}
+	
+	public ObjectInputStream getIn() {
+		return in;
+	}
+	
+	public Socket getSocket() {
+		return socket;
+	}
 
 }
