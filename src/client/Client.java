@@ -484,6 +484,7 @@ public class Client {
 							if(currentTTL >= 0) {
 								informaVizinhos(info[0]+ "," + info[1]+ "," + info[2] + "," + currentTTL);
 							}
+							System.out.println(info[0]+ "," + info[1]+ "," + info[2] + "," + currentTTL);
 							break;
 						default:
 							//Caso que recebe dados de uma transmissao
