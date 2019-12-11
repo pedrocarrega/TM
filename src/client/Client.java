@@ -286,7 +286,6 @@ public class Client {
 								Socket reencaminhar = clients.get(r.nextInt(clients.size()));
 								ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
 								out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalSocketAddress().toString().substring(1));
-								out.close();
 							}else {
 								Socket newVizinho;
 								ObjectOutputStream out;
@@ -379,7 +378,6 @@ public class Client {
 									Socket reencaminhar = clients.get(r.nextInt(clients.size()));
 									ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
 									out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalSocketAddress().toString().substring(1));
-									out.close();
 								}else {
 									Socket newVizinho;
 									ObjectOutputStream out;
@@ -410,7 +408,7 @@ public class Client {
 							break;
 						}
 
-						in.close();
+						//in.close();
 					} catch (IOException | ClassNotFoundException e) {
 						e.printStackTrace();
 					}
