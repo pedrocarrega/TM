@@ -274,7 +274,6 @@ public class Client {
 									System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
 									ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
 									outStream.writeObject(1);
-									//outStream.close();
 									System.out.println("Close: " + newVizinho.isClosed());
 								}
 
@@ -289,14 +288,22 @@ public class Client {
 								out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalSocketAddress().toString().substring(1));
 								out.close();
 							}else {
-								Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
-								ObjectOutputStream out = new ObjectOutputStream(newVizinho.getOutputStream());
+								Socket newVizinho;
+								ObjectOutputStream out;
+								if(result >= 0) {
+									newVizinho = clients.get(result);
+									out = new ObjectOutputStream(newVizinho.getOutputStream());
+									
+									out.writeObject(-1);
+								}else {
+									newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
+									out = new ObjectOutputStream(newVizinho.getOutputStream());
+									
+									out.writeObject(-1);
 
-								out.writeObject(-1);
-
-								newVizinho.close();
-								out.close();
-								inStream.close();
+									newVizinho.close();
+									out.close();
+								}
 							}
 
 						}
