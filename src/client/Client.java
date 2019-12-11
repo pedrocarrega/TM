@@ -25,6 +25,8 @@ public class Client {
 	private static Map<Integer, List<String>> tabela;
 	private static final int MAX_CLIENT_SIZE = 30;
 	private static final int THREASHOLD_VIZINHOS = 5;
+	private static String localIp;
+	private final static int probToGossip = 70;
 
 	public static void main(String[] args) throws NumberFormatException, UnknownHostException, ClassNotFoundException, IOException, InterruptedException {
 
@@ -51,10 +53,8 @@ public class Client {
 		Listen listen = new Listen();
 		listen.start();
 		String comando;
+		System.out.println("Insira o comando que deseja:");
 		while(!(comando = sc.nextLine()).equals("exit")) {
-			if(comando.equals("Visualizar")) {
-
-			}
 			switch(comando) {
 			case "Visualizar":
 				System.out.println("Escolha um dos seguintes canais");
@@ -95,8 +95,49 @@ public class Client {
 
 
 	private static void startTransmission(int idCanalTrans) {
-		// TODO Ter� de iniciar uma thread para a tranmissao caso necess�rio e fazer gossip a avisar que est� a tranmitir esta stream
+		//gossip
+		if(clients.size() > 0) {
+		informaVizinhos("Stream," + idCanalTrans + "," + localIp + "," + TTL);
+		}
+		
+		char[] arrayEnviado = new char[1000];
+		for(int i = 0; i < 1000; i++) {
+			arrayEnviado[i] = (char)i;
+		}
+		Transmit canal = new Transmit(arrayEnviado);
+		canal.start();
 
+	}
+
+
+	private static void informaVizinhos(String string) {
+		// Fazer Gossip
+		int probGossip = probToGossip;
+		
+		if(clients.size() < THREASHOLD_VIZINHOS) {
+			probGossip = 100;
+		}
+		
+		List<Socket> gossip = new ArrayList<>();
+		
+		int size = (clients.size()*probGossip)/100;
+		
+		Random r = new Random();
+		
+		for(int i = 0; i < size; i++) {
+			Socket temp = clients.get(r.nextInt(clients.size()));
+			if(!gossip.contains(temp)) {
+				gossip.add(temp);
+				try {
+					ObjectOutputStream out = new ObjectOutputStream(temp.getOutputStream());
+					out.writeObject(string);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		
 	}
 
 
@@ -107,8 +148,12 @@ public class Client {
 
 	private static void imprimeStreams() {
 
-		for(Integer i : tabela.keySet()) {
-			System.out.println(i);
+		if(tabela != null) {
+			for(Integer i : tabela.keySet()) {
+				System.out.println(i);
+			}
+		}else {
+			System.out.println("Não existem canais disponiveis para visualizar");
 		}
 
 	}
@@ -128,6 +173,7 @@ public class Client {
 		if(result < 0) {
 			socket = new Socket(ip, Integer.parseInt(port));
 			portS = socket.getLocalPort()+1;
+			localIp = socket.getLocalAddress().toString();
 		}else {
 			socket = clients.get(result);
 			System.out.println(socket);
@@ -173,7 +219,7 @@ public class Client {
 			
 		}
 
-server.close();
+		server.close();
 
 	}
 
@@ -253,6 +299,7 @@ server.close();
 			while(true) {
 				try {
 					socketAceite = this.socket.accept();
+					localIp = socketAceite.getLocalAddress().toString();
 
 					System.out.println("ligou");
 
