@@ -519,20 +519,23 @@ public class Client {
 		@Override
 		public void run() {
 
-			arrToTransmit[0]++;
+//			arrToTransmit[0]++;
 
-			for(Socket viewer : viewers) {
+			for(char c : arrToTransmit) {
+				for(Socket viewer : viewers) {
+					try {
+						ObjectOutputStream out = new ObjectOutputStream(viewer.getOutputStream());
+						out.writeObject(c); //precisas de enviar 1000 bytes
+						System.out.print(c);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
 				try {
-					ObjectOutputStream out = new ObjectOutputStream(viewer.getOutputStream());
-					out.writeObject(arrToTransmit); //precisas de enviar 1000 bytes
-				} catch (IOException e) {
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-			}
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
 			}
 		}
 	}
