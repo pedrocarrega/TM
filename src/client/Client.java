@@ -51,6 +51,7 @@ public class Client {
 			server.start();
 		}
 		
+		viewers = new ArrayList();
 		tabela = new HashMap<>();
 		
 		Listen listen = new Listen();
