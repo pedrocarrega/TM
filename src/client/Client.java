@@ -90,18 +90,7 @@ public class Client {
 				System.out.println("Transmitir");
 			}
 		}
-
 		sc.close();
-
-
-		/*
-		int input = Integer.parseInt(sc.nextLine());
-
-		if(1 <= input && input <= 3)
-			connectServer(args[0], Integer.parseInt(args[1]), input, sc);
-		else
-			System.err.println("INVALID ACTION");*/
-
 	}
 
 
@@ -128,23 +117,17 @@ public class Client {
 	private static void randomWalk(String ip, String port) throws NumberFormatException, UnknownHostException, IOException, ClassNotFoundException {
 
 		Socket socket = null;
-		boolean result = true;
+		int result = -1;
 
 		synchronized (clients) {
-
-			for(Socket compare : clients) {
-				String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
-
-				if(ip.equals(something[0])) {
-					socket = compare;
-					result = false;
-					break;
-				}
-			}
+			
+			result = checkIfExists(ip);
 
 		}
-		if(result) {
+		if(result < 0) {
 			socket = new Socket(ip, Integer.parseInt(port));
+		}else {
+			socket = clients.get(result);
 		}
 
 		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
@@ -155,8 +138,10 @@ public class Client {
 
 		int portS = socket.getLocalPort()+1;
 
-		socket.close();
-		outStream.close();
+		if(result < 0) {
+			socket.close();
+			outStream.close();
+		}
 
 		ServerSocket server = new ServerSocket(portS);
 		Socket newSocket = server.accept();
@@ -166,23 +151,12 @@ public class Client {
 
 		if(response == 1) {
 
-			//boolean result = true;
 
 			synchronized (clients) {
 
-				/*for(Socket compare : clients) {
-					String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
-
-					if(info[0].equals(something[0])) {
-						result = false;
-						break;
-					}*/
 				clients.add(newSocket);
 				System.out.println("entrou");
-				//}
 
-				/*if(result)
-					clients.add(newSocket);*/
 			}
 		}else {
 			System.out.println("Errors");
@@ -235,6 +209,23 @@ public class Client {
 
 	}
 
+	private static int checkIfExists(String ipCompare) {
+		
+		int counter = 0;
+		
+		for(Socket compare : clients) {
+			String[] something = (compare.getRemoteSocketAddress().toString().substring(1)).split(":");
+
+			if(ipCompare.equals(something[0])) {
+				return counter;
+			}
+			counter++;
+		}
+		
+		return -1;
+	}
+	
+	
 	private static class SimpleServer extends Thread implements Runnable{
 
 		private ServerSocket socket = null;
@@ -266,28 +257,18 @@ public class Client {
 					inStream.close();
 
 					if(info[0].equals("RandomWalk")) {
-						boolean result = true;
+						
 						String[] address = info[2].split(":");
+						int result = checkIfExists(address[0]);
+						
 						if(clients.size() < MAX_CLIENT_SIZE) {
 
 							System.out.println(address[0] + " " + Integer.parseInt(address[1]));
 							Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+1);
 
-
-
 							synchronized (clients) {
 
-								for(Socket compare : clients) {
-									String[] something = (compare.getRemoteSocketAddress().toString().substring(1)).split(":");
-									System.out.println("Address: " + address[0] + " Compare: " + something[0]);
-
-									if(address[0].equals(something[0])) {
-										result = false;
-										break;
-									}
-								}
-
-								if(result) {
+								if(result < 0) {
 									clients.add(newVizinho);
 
 									System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
@@ -299,7 +280,7 @@ public class Client {
 
 							}
 						}
-						if(!result || clients.size() >= MAX_CLIENT_SIZE) {
+						if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
 							int ttl = Integer.parseInt(info[1]) - 1;
 							if(ttl > 0) {
 								Random r = new Random();
@@ -332,12 +313,12 @@ public class Client {
 	}
 
 	/*
-	 * Usado para comunicaçao entre sockets que ja estao abertas
-	 * ou seja random walks com alguem que já foi adicionado aos vizinhos
+	 * Usado para comunicaï¿½ao entre sockets que ja estao abertas
+	 * ou seja random walks com alguem que jï¿½ foi adicionado aos vizinhos
 	 * ou entao para receber gossip dos vizinhos e saber propaga-lo
 	 * Tamebm tem de incluir os casos em que a pessoa que ira assistir
 	 * ah nossa stream ja seja nossa vizinha e use essa socket para 
-	 * nos pedir para o adicionar à lista de viewers da stream
+	 * nos pedir para o adicionar ï¿½ lista de viewers da stream
 	 */
 	private static class Listen extends Thread implements Runnable{
 
@@ -349,7 +330,7 @@ public class Client {
 
 			while(run) {
 
-				System.out.println("GAS GAS GAS");
+				//System.out.println("GAS GAS GAS");
 
 				for(Socket socket : clients) {
 					ObjectInputStream in;
@@ -362,26 +343,18 @@ public class Client {
 						switch (info[0]) {
 						case "RandomWalk":
 
-							boolean result = true;
+							int result = -1;
 							String[] address = info[2].split(":");
 							if(clients.size() < MAX_CLIENT_SIZE) {
 
 								System.out.println(address[0] + " " + Integer.parseInt(address[1]));
 
+								result = checkIfExists(address[0]);
 
 
 								synchronized (clients) {
 
-									for(Socket compare : clients) {
-										String[] something = (compare.getLocalAddress().toString().substring(1)).split(":");
-
-										if(address[0].equals(something[0])) {
-											result = false;
-											break;
-										}
-									}
-
-									if(result) {
+									if(result < 0) {
 										Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
 										clients.add(newVizinho);
 										System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
@@ -392,7 +365,7 @@ public class Client {
 
 								}
 							}
-							if(!result || clients.size() >= MAX_CLIENT_SIZE) {
+							if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
 								int ttl = Integer.parseInt(info[1]) - 1;
 								if(ttl > 0) {
 									Random r = new Random();
@@ -401,15 +374,23 @@ public class Client {
 									out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalSocketAddress().toString().substring(1));
 									out.close();
 								}else {
-									Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
-									ObjectOutputStream out = new ObjectOutputStream(newVizinho.getOutputStream());
+									Socket newVizinho;
+									ObjectOutputStream out;
+									if(result >= 0) {
+										newVizinho = clients.get(result);
+										out = new ObjectOutputStream(newVizinho.getOutputStream());
+										
+										out.writeObject(-1);
+									}else {
+										newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
+										out = new ObjectOutputStream(newVizinho.getOutputStream());
+										
+										out.writeObject(-1);
 
-									out.writeObject(-1);
-
-									newVizinho.close();
-									out.close();
+										newVizinho.close();
+										out.close();
+									}
 								}
-
 							}
 
 							break;
