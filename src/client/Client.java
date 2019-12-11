@@ -468,7 +468,7 @@ public class Client {
 							break;
 
 						case "Gossip":
-							List<String> listStreams = tabela.get(info[1]);
+							List<String> listStreams = tabela.get(Integer.parseInt(info[1]));
 							if(listStreams != null) {
 								if(listStreams.size() < 3) {
 									if(!listStreams.contains(info[2])) {
