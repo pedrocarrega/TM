@@ -311,57 +311,65 @@ public class Client {
 					socketAceite.close();
 					inStream.close();
 
-					if(info[0].equals("RandomWalk")) {
-						
-						String[] address = info[2].split(":");
-						int result = checkIfExists(address[0]);
-						
-						if(clients.size() < MAX_CLIENT_SIZE) {
-
-							System.out.println(address[0] + " " + Integer.parseInt(address[1]));
-							Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+1);
-
-							synchronized (clients) {
-
-								if(result < 0) {
-									clients.add(newVizinho);
-
-									System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
-									ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
-									outStream.writeObject(1);
-									System.out.println("Close: " + newVizinho.isClosed());
+					//if(info[0].equals("RandomWalk")) {
+					switch(info[0]) {	
+						case "RandomWalk":
+							String[] address = info[2].split(":");
+							int result = checkIfExists(address[0]);
+							
+							if(clients.size() < MAX_CLIENT_SIZE) {
+	
+								System.out.println(address[0] + " " + Integer.parseInt(address[1]));
+								Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+1);
+	
+								synchronized (clients) {
+	
+									if(result < 0) {
+										clients.add(newVizinho);
+	
+										System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
+										ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
+										outStream.writeObject(1);
+										System.out.println("Close: " + newVizinho.isClosed());
+									}
+	
 								}
-
 							}
-						}
-						if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
-							int ttl = Integer.parseInt(info[1]) - 1;
-							if(ttl > 0) {
-								Random r = new Random();
-								Socket reencaminhar = clients.get(r.nextInt(clients.size()));
-								ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
-								out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalSocketAddress().toString().substring(1));
-							}else {
-								Socket newVizinho;
-								ObjectOutputStream out;
-								if(result >= 0) {
-									newVizinho = clients.get(result);
-									out = new ObjectOutputStream(newVizinho.getOutputStream());
-									
-									out.writeObject(-1);
+							if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
+								int ttl = Integer.parseInt(info[1]) - 1;
+								if(ttl > 0) {
+									Random r = new Random();
+									Socket reencaminhar = clients.get(r.nextInt(clients.size()));
+									ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
+									out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalSocketAddress().toString().substring(1));
 								}else {
-									newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
-									out = new ObjectOutputStream(newVizinho.getOutputStream());
-									
-									out.writeObject(-1);
-
-									newVizinho.close();
-									out.close();
+									Socket newVizinho;
+									ObjectOutputStream out;
+									if(result >= 0) {
+										newVizinho = clients.get(result);
+										out = new ObjectOutputStream(newVizinho.getOutputStream());
+										
+										out.writeObject(-1);
+									}else {
+										newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
+										out = new ObjectOutputStream(newVizinho.getOutputStream());
+										
+										out.writeObject(-1);
+	
+										newVizinho.close();
+										out.close();
+									}
 								}
+	
 							}
-
-						}
-
+							break;
+						default:
+							System.out.println(info[0]);
+							for(Socket s : viewers) {
+								ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+								out.writeObject(info[0]);
+							}							
+							break;
 					}
 				} catch (IOException | ClassNotFoundException e) {
 					e.printStackTrace();
@@ -469,6 +477,12 @@ public class Client {
 							
 							break;
 						default:
+							//Caso que recebe dados de uma transmissao
+							System.out.println(info[0]);
+							for(Socket s : viewers) {
+								ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+								out.writeObject(info[0]);
+							}
 							break;
 						}
 
