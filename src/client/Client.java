@@ -35,7 +35,7 @@ public class Client {
 			String initialIp = args[0];
 			String initialPort = args[1];
 
-			IntStream.range(0, 30).forEach((int i) -> {
+			IntStream.range(0, 1).forEach((int i) -> {
 				try {
 					System.out.println("random: " + i);
 					randomWalk(initialIp, initialPort);
@@ -118,6 +118,7 @@ public class Client {
 
 		Socket socket = null;
 		int result = -1;
+		int portS;
 
 		synchronized (clients) {
 			
@@ -126,8 +127,11 @@ public class Client {
 		}
 		if(result < 0) {
 			socket = new Socket(ip, Integer.parseInt(port));
+			portS = socket.getLocalPort()+1;
 		}else {
 			socket = clients.get(result);
+			System.out.println(socket);
+			portS = socket.getLocalPort();
 		}
 
 		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
@@ -136,16 +140,20 @@ public class Client {
 
 		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
 
-		int portS = socket.getLocalPort()+1;
+		
+		
+		
 
 		if(result < 0) {
 			socket.close();
 			outStream.close();
 		}
 
-		ServerSocket server = new ServerSocket(portS);
+		ServerSocket server = new ServerSocket(portS);System.out.println(portS);
 		Socket newSocket = server.accept();
+		
 		ObjectInputStream in = new ObjectInputStream(newSocket.getInputStream());
+		
 
 		int response = (int)in.readObject();
 
@@ -162,10 +170,10 @@ public class Client {
 			System.out.println("Errors");
 			newSocket.close();
 			in.close();
-			server.close();
+			
 		}
 
-
+server.close();
 
 	}
 
