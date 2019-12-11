@@ -160,8 +160,9 @@ public class Client {
 		}else {
 			streamer = new Socket(streamerEscolhido, 12345);
 		}
+		System.out.println("Stream: " + streamer);
 		ObjectOutputStream out = new ObjectOutputStream(streamer.getOutputStream());
-		out.writeObject("Visualizar");
+		out.writeObject("Visualizar,");
 		
 		//avisar vizinhos que tb tranmitirei esta stream
 		informaVizinhos("Gossip," + idCanalVis + "," + localIp + "," + TTL);
@@ -400,10 +401,11 @@ public class Client {
 						break;
 					default:
 						socketAceite.close();
-						System.out.println(info[0]);
+						int i = info[1].charAt(0);
+						System.out.println("recebido " + i);
 						for(Socket s : viewers) {
 							ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-							out.writeObject(info[0]);
+							out.writeObject(info[1]);
 						}							
 						break;
 					}
@@ -446,12 +448,15 @@ public class Client {
 						String[] info = new String[1];
 						
 						
+						
 						if(recebido.contains(",")) {
 							info = recebido.split(",");
 						}else {
 							int val = (int)recebido.charAt(0);
 							info[0] = val+"";
 						}
+						System.out.println(info[0]);
+						
 						switch (info[0]) {
 						case "RandomWalk":
 
@@ -523,17 +528,19 @@ public class Client {
 							if(currentTTL >= 0) {
 								informaVizinhos(info[0]+ "," + info[1]+ "," + info[2] + "," + currentTTL);
 							}
-							System.out.println(info[0]+ "," + info[1]+ "," + info[2] + "," + currentTTL);
+							//System.out.println(info[0]+ "," + info[1]+ "," + info[2] + "," + currentTTL);
 							break;
 						case "Visualizar":
+							System.out.println("Este adicionou me :" + socket);
 							viewers.add(socket);
 							break;
 						default:
 							//Caso que recebe dados de uma transmissao
-							System.out.println(Integer.parseInt(info[0]));
+							int i = info[1].charAt(0);
+							System.out.println("recebido " + i);
 							for(Socket s : viewers) {
 								ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-								out.writeObject(info[0]);
+								out.writeObject(recebido);
 							}
 							break;
 						}
@@ -564,11 +571,14 @@ public class Client {
 			//			arrToTransmit[0]++;
 
 			for(char c : arrToTransmit) {
+				//System.out.println("entre os for's " + viewers.size());
 				for(Socket viewer : viewers) {
 					try {
 						ObjectOutputStream out = new ObjectOutputStream(viewer.getOutputStream());
-						out.writeObject(c); //precisas de enviar 1000 bytes
-						System.out.print(c);
+						int val = (int)c;
+						System.out.println("enviado: " + val);
+						out.writeObject("Stream,"+c);
+						//out.writeObject(val+""); //precisas de enviar 1000 bytes
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -579,6 +589,7 @@ public class Client {
 					e.printStackTrace();
 				}
 			}
+			System.out.println("Acabou de transmitir");
 		}
 	}
 
