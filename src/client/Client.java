@@ -145,8 +145,23 @@ public class Client {
 	}
 
 
-	private static void visualizarStream(int idCanalVis) {
+	private static void visualizarStream(int idCanalVis) throws UnknownHostException, IOException {
 		// TODO Criar uma liga��o ao ip que estah na lista tabela e pedir para ele nos transmitir a stream
+		List<String> streamers = tabela.get(idCanalVis);
+		
+		Random r = new Random();
+		String streamerEscolhido = streamers.get(r.nextInt(streamers.size()));
+		
+		int response = checkIfExists(streamerEscolhido);
+		
+		Socket streamer;
+		if(response >= 0) {
+			streamer = clients.get(response);
+		}else {
+			streamer = new Socket(streamerEscolhido, 12345);
+		}
+		ObjectOutputStream out = new ObjectOutputStream(streamer.getOutputStream());
+		out.writeObject("Visualizar");
 	}
 
 
@@ -367,6 +382,9 @@ public class Client {
 	
 							}
 							break;
+						case "Visualizar":
+							//viewers.add(socket)
+							break;
 						default:
 							System.out.println(info[0]);
 							for(Socket s : viewers) {
@@ -485,6 +503,9 @@ public class Client {
 								informaVizinhos(info[0]+ "," + info[1]+ "," + info[2] + "," + currentTTL);
 							}
 							System.out.println(info[0]+ "," + info[1]+ "," + info[2] + "," + currentTTL);
+							break;
+						case "Visualizar":
+							//viewers.add(socket)
 							break;
 						default:
 							//Caso que recebe dados de uma transmissao
