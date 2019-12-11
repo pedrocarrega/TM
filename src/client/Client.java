@@ -469,16 +469,21 @@ public class Client {
 
 						case "Gossip":
 							List<String> listStreams = tabela.get(info[1]);
-							if(listStreams.size() < 3) {
-								if(!listStreams.contains(info[2])) {
-									listStreams.add(info[2]);
+							if(listStreams != null) {
+								if(listStreams.size() < 3) {
+									if(!listStreams.contains(info[2])) {
+										listStreams.add(info[2]);
+									}
 								}
+							}else {
+								listStreams = new ArrayList<String>();
+								listStreams.add(info[2]);
+								tabela.put(Integer.parseInt(info[1]), listStreams);
 							}
 							int currentTTL = Integer.parseInt(info[3])-1;
 							if(currentTTL >= 0) {
 								informaVizinhos(info[0]+ "," + info[1]+ "," + info[2] + "," + currentTTL);
 							}
-							
 							break;
 						default:
 							//Caso que recebe dados de uma transmissao
