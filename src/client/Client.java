@@ -97,7 +97,7 @@ public class Client {
 	private static void startTransmission(int idCanalTrans) {
 		//gossip
 		if(clients.size() > 0) {
-		informaVizinhos("Stream," + idCanalTrans + "," + localIp + "," + TTL);
+		informaVizinhos("Gossip," + idCanalTrans + "," + localIp + "," + TTL);
 		}
 		
 		char[] arrayEnviado = new char[1000];
@@ -455,10 +455,19 @@ public class Client {
 
 							break;
 
-						case "Disconnect":
-
+						case "Gossip":
+							List<String> listStreams = tabela.get(info[1]);
+							if(listStreams.size() < 3) {
+								if(!listStreams.contains(info[2])) {
+									listStreams.add(info[2]);
+								}
+							}
+							int currentTTL = Integer.parseInt(info[3])-1;
+							if(currentTTL >= 0) {
+								informaVizinhos(info[0]+ "," + info[1]+ "," + info[2] + "," + currentTTL);
+							}
+							
 							break;
-
 						default:
 							break;
 						}
