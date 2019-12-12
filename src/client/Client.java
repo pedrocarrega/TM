@@ -38,7 +38,7 @@ public class Client {
 			String initialIp = args[0];
 			String initialPort = args[1];
 
-			IntStream.range(0, 1).forEach((int i) -> {
+			IntStream.range(0, MAX_CLIENT_SIZE).forEach((int i) -> {
 				try {
 					System.out.println("random: " + i);
 					randomWalk(initialIp, initialPort);
@@ -195,12 +195,12 @@ public class Client {
 		}
 		if(result < 0) {
 			socket = new Socket(ip, Integer.parseInt(port));
-			portS = socket.getLocalPort()+1;
+			portS = socket.getLocalPort()+2;
 			localIp = socket.getLocalAddress().toString().substring(1);
 		}else {
 			socket = clients.get(result);
 			System.out.println(socket);
-			portS = socket.getLocalPort();
+			portS = socket.getLocalPort()+2;
 		}
 
 		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
@@ -209,22 +209,19 @@ public class Client {
 
 		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
 
-
-
-
-
 		if(result < 0) {
 			socket.close();
 			outStream.close();
 		}
-
-		ServerSocket server = new ServerSocket(portS);System.out.println(portS);
+		System.out.println(portS);
+		ServerSocket server = new ServerSocket(portS);
 		Socket newSocket = server.accept();
 
 		ObjectInputStream in = new ObjectInputStream(newSocket.getInputStream());
 
 
 		int response = (int)in.readObject();
+		System.out.println("resposta " +response);
 
 		if(response == 1) {
 
@@ -353,7 +350,7 @@ public class Client {
 						if(clients.size() < MAX_CLIENT_SIZE) {
 
 							System.out.println(address[0] + " " + Integer.parseInt(address[1]));
-							Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+1);
+							Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
 
 							synchronized (clients) {
 
@@ -378,7 +375,7 @@ public class Client {
 							}else {
 								Socket newVizinho;
 								ObjectOutputStream out;
-								if(result >= 0) {
+								/*if(result >= 0) {
 									newVizinho = clients.get(result);
 									out = new ObjectOutputStream(newVizinho.getOutputStream());
 
@@ -391,7 +388,14 @@ public class Client {
 
 									newVizinho.close();
 									out.close();
-								}
+								}*/
+								newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
+								out = new ObjectOutputStream(newVizinho.getOutputStream());
+
+								out.writeObject(-1);
+
+								newVizinho.close();
+								out.close();
 							}
 
 						}
@@ -474,10 +478,12 @@ public class Client {
 									if(result < 0) {
 										Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
 										clients.add(newVizinho);
+										newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
 										System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
 										ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
 										outStream.writeObject(1);
-										outStream.close();
+										outStream.close();//fechar a socket que manda a resposta
+										newVizinho.close();
 									}
 
 								}
@@ -487,25 +493,33 @@ public class Client {
 								if(ttl > 0) {
 									Random r = new Random();
 									Socket reencaminhar = clients.get(r.nextInt(clients.size()));
+									System.out.println("porta de resposta port=" + socket.getRemoteSocketAddress());
 									ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
 									out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalSocketAddress().toString().substring(1));
 								}else {
 									Socket newVizinho;
 									ObjectOutputStream out;
-									if(result >= 0) {
+									/*if(result >= 0) {
 										newVizinho = clients.get(result);
 										out = new ObjectOutputStream(newVizinho.getOutputStream());
 
 										out.writeObject(-1);
 									}else {
-										newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
+										newVizinho = new Socket(address[0], Integer.parseInt(address[1])+1);
 										out = new ObjectOutputStream(newVizinho.getOutputStream());
 
 										out.writeObject(-1);
 
 										newVizinho.close();
 										out.close();
-									}
+									}*/
+									newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
+									out = new ObjectOutputStream(newVizinho.getOutputStream());
+
+									out.writeObject(-1);
+
+									newVizinho.close();
+									out.close();
 								}
 							}
 
