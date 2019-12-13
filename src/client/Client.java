@@ -76,7 +76,12 @@ public class Client {
 						verifierVisualiza = false;
 						System.out.println("Esta a assistir ao canal " + escolhaVis);
 					}else {
-						System.out.println("Insira um canal valido");
+						if(tabela.size() == 0) {
+							System.out.println("De momento nao existem streams disponiveis");
+							break;
+						}else {
+							System.out.println("Insira um canal valido");
+						}
 					}
 				}
 				break;
@@ -110,10 +115,10 @@ public class Client {
 		}
 
 		char[] arrayEnviado = new char[1000];
-		for(int i = 0; i < 1000; i++) {
+		for(int i = 0; i < 250; i++) {
 			arrayEnviado[i] = (char)i;
 		}
-		Transmit canal = new Transmit(arrayEnviado);
+		Transmit canal = new Transmit(arrayEnviado, idCanalTrans);
 		canal.start();
 		
 		canal.join();
@@ -536,7 +541,8 @@ System.out.println("resposta " );
 							break;
 							
 						case "End":
-							tabela.remove(Integer.parseInt(info[1]));
+							System.out.println(tabela.remove(Integer.parseInt(info[1])));
+							System.out.println("Acabou a transmissao " + info[1]);
 							if((Integer.parseInt(info[2])-1) >= 0) {
 								informaVizinhos(info[0]+ "," + info[1]+ "," + (Integer.parseInt(info[2])-1));
 							}
@@ -570,10 +576,12 @@ System.out.println("resposta " );
 	private static class Transmit extends Thread implements Runnable{
 
 		private char[] arrToTransmit;
+		private int streamId;
 
-		public Transmit(char[] arr) {
+		public Transmit(char[] arr, int id) {
 			viewers = new ArrayList<>();
 			arrToTransmit = arr;
+			this.streamId = id;
 		}
 
 		@Override
@@ -581,6 +589,7 @@ System.out.println("resposta " );
 
 			//			arrToTransmit[0]++;
 			Socket socketRemoved = null;
+			int counter = 0;
 			
 			for(char c : arrToTransmit) {
 				//System.out.println("entre os for's " + viewers.size());
@@ -603,6 +612,11 @@ System.out.println("resposta " );
 					Thread.sleep(50);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
+				}
+				counter++;
+				if(counter % 50 == 0) {
+					informaVizinhos("Gossip," + streamId + "," + localIp + "," + TTL);
+					counter = 0;
 				}
 			}
 			System.out.println("Acabou de transmitir");
