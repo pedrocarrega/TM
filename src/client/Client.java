@@ -34,6 +34,15 @@ public class Client {
 		Scanner sc = new Scanner(System.in);
 		//System.out.println("1 - Watch Stream\n2 - Host Stream \nChoose your action: ");
 		clients = new ArrayList<>();
+		
+		SimpleServer server = new SimpleServer(12345);
+		server.start();
+
+		viewers = new ArrayList<Socket>();
+		tabela = new HashMap<>();
+
+		Listen listen = new Listen();
+		listen.start();
 		if(args.length > 0) {
 			String initialIp = args[0];
 			String initialPort = args[1];
@@ -47,14 +56,6 @@ public class Client {
 				}
 			});
 		}
-			SimpleServer server = new SimpleServer(12345);
-			server.start();
-
-		viewers = new ArrayList<Socket>();
-		tabela = new HashMap<>();
-
-		Listen listen = new Listen();
-		listen.start();
 		String comando;
 		System.out.println("Insira o comando que deseja:");
 		while(!(comando = sc.nextLine()).equals("exit")) {
@@ -215,6 +216,7 @@ public class Client {
 		System.out.println(portS);
 		ServerSocket server = new ServerSocket(portS);
 		Socket newSocket = server.accept();
+		System.out.println("server: " + newSocket.getLocalPort());
 
 		ObjectInputStream in = new ObjectInputStream(newSocket.getInputStream());
 
