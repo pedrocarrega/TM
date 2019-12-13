@@ -13,6 +13,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.time.LocalTime;
 
@@ -425,6 +426,7 @@ System.out.println("resposta " );
 						if(in != null) {
 							in.reset();
 						}
+						
 						in = new ObjectInputStream(socket.getInputStream());
 
 						String recebido = (String) in.readObject();
@@ -550,8 +552,10 @@ System.out.println("resposta " );
 						}
 
 						//in.close();
-					} catch (IOException | ClassNotFoundException e) {
+					} catch (ClassNotFoundException e) {
 						e.printStackTrace();
+					} catch (IOException e) { //socket exception
+						
 					}
 
 				}
