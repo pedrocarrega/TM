@@ -46,10 +46,9 @@ public class Client {
 					e.printStackTrace();
 				}
 			});
-		}else { //isto?
+		}
 			SimpleServer server = new SimpleServer(12345);
 			server.start();
-		}
 
 		viewers = new ArrayList<Socket>();
 		tabela = new HashMap<>();
