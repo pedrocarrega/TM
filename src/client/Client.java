@@ -370,7 +370,7 @@ public class Client {
 								Random r = new Random();
 								Socket reencaminhar = clients.get(r.nextInt(clients.size()));
 								ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
-								out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalSocketAddress().toString().substring(1));
+								out.writeObject("RandomWalk," + ttl + "," + info[2]);
 							}else {
 								Socket newVizinho;
 								ObjectOutputStream out;
@@ -494,7 +494,7 @@ public class Client {
 									Socket reencaminhar = clients.get(r.nextInt(clients.size()));
 									System.out.println("porta de resposta port=" + socket.getRemoteSocketAddress());
 									ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
-									out.writeObject("RandomWalk," + ttl + "," + reencaminhar.getLocalSocketAddress().toString().substring(1));
+									out.writeObject("RandomWalk," + ttl + "," + info[2]);
 								}else {
 									Socket newVizinho;
 									ObjectOutputStream out;
