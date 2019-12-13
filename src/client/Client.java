@@ -35,8 +35,7 @@ public class Client {
 		//System.out.println("1 - Watch Stream\n2 - Host Stream \nChoose your action: ");
 		clients = new ArrayList<>();
 		
-		SimpleServer server = new SimpleServer(12345);
-		server.start();
+		
 
 		viewers = new ArrayList<Socket>();
 		tabela = new HashMap<>();
@@ -55,7 +54,13 @@ public class Client {
 					e.printStackTrace();
 				}
 			});
+		}else {
+			SimpleServer server = new SimpleServer(12345);
+		server.start();
 		}
+		
+		
+		
 		String comando;
 		System.out.println("Insira o comando que deseja:");
 		while(!(comando = sc.nextLine()).equals("exit")) {
@@ -319,6 +324,7 @@ public class Client {
 			Socket socketAceite;
 			while(true) {
 				try {
+					System.out.println("antes de ligar: " + this.socket);
 					socketAceite = this.socket.accept();
 					localIp = socketAceite.getLocalAddress().toString().substring(1);
 
@@ -371,6 +377,7 @@ public class Client {
 							if(ttl > 0) {
 								Random r = new Random();
 								Socket reencaminhar = clients.get(r.nextInt(clients.size()));
+								System.out.println("vou mandar");
 								ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
 								out.writeObject("RandomWalk," + ttl + "," + info[2]);
 							}else {
@@ -442,11 +449,12 @@ public class Client {
 
 			while(run) {
 
-				//System.out.println("GAS GAS GAS");
-
+				System.out.println("size: " + clients.size());
+				
 				for(Socket socket : clients) {
 					ObjectInputStream in;
 					try {
+						System.out.println("before in");
 						in = new ObjectInputStream(socket.getInputStream());
 
 						String recebido = (String) in.readObject();
