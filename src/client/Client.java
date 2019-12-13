@@ -54,11 +54,11 @@ public class Client {
 					e.printStackTrace();
 				}
 			});
-		}else {
-			SimpleServer server = new SimpleServer(12345);
-		server.start();
+		//}else {
+			
 		}
-		
+		SimpleServer server = new SimpleServer(12345);
+		server.start();
 		
 		
 		String comando;
@@ -314,6 +314,7 @@ public class Client {
 			try {
 				this.socket = new ServerSocket(port);
 			} catch (IOException e) {
+				e.printStackTrace();
 				System.out.println("Erro na criacao da server socket");
 			}
 		}
