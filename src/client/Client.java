@@ -227,7 +227,8 @@ public class Client {
 		Socket newSocket = server.accept();
 		System.out.println("server: " + newSocket.getLocalPort());
 
-		ObjectInputStream in = new ObjectInputStream(newSocket.getInputStream());
+		ObjectInputStream in = new ObjectInputStream(newSocket.getInputStream()); 
+		//fica preso AQUI caso tenhamos 1+ clientes
 
 System.out.println("resposta " );
 		int response = (int)in.readObject();
@@ -497,7 +498,9 @@ System.out.println("resposta " );
 									out = new ObjectOutputStream(newVizinho.getOutputStream());
 
 									out.writeObject(-1);
-
+									out.flush();
+									System.out.println("test: " + (Integer.parseInt(address[1])+2));
+									
 									newVizinho.close();
 									out.close();
 								}
