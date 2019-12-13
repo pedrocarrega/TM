@@ -125,31 +125,32 @@ public class Client {
 
 	private static void informaVizinhos(String string) {
 		// Fazer Gossip
-		int probGossip = probToGossip;
-
-		if(clients.size() < THREASHOLD_VIZINHOS) {
-			probGossip = 100;
-		}
-
-		List<Socket> gossip = new ArrayList<>();
-
-		int size = (clients.size()*probGossip)/100;
-
-		Random r = new Random();
-
-		for(int i = 0; i < size; i++) {
-			Socket temp = clients.get(r.nextInt(clients.size()));
-			if(!gossip.contains(temp)) {
-				gossip.add(temp);
-				try {
-					ObjectOutputStream out = new ObjectOutputStream(temp.getOutputStream());
-					out.writeObject(string);
-				} catch (IOException e) {
-					e.printStackTrace();
+		if(clients.size() > 0) {
+			int probGossip = probToGossip;
+	
+			if(clients.size() < THREASHOLD_VIZINHOS) {
+				probGossip = 100;
+			}
+	
+			List<Socket> gossip = new ArrayList<>();
+	
+			int size = (clients.size()*probGossip)/100;
+	
+			Random r = new Random();
+	
+			for(int i = 0; i < size; i++) {
+				Socket temp = clients.get(r.nextInt(clients.size()));
+				if(!gossip.contains(temp)) {
+					gossip.add(temp);
+					try {
+						ObjectOutputStream out = new ObjectOutputStream(temp.getOutputStream());
+						out.writeObject(string);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
-
 
 	}
 
@@ -414,7 +415,7 @@ System.out.println("resposta " );
 		@Override
 		public void run() {
 			//boolean run = true;
-
+			Socket socketRemoved = null;
 			while(true) {
 
 				System.out.print(""); //ISTO SO CORRE POR CAUSA DISTO!!!
@@ -555,11 +556,13 @@ System.out.println("resposta " );
 					} catch (ClassNotFoundException e) {
 						e.printStackTrace();
 					} catch (IOException e) { //socket exception
-						
+						socketRemoved = socket;
+						break;
 					}
 
 				}
-
+				clients.remove(socketRemoved);
+				viewers.remove(socketRemoved);
 			}
 		}
 	}
@@ -577,20 +580,25 @@ System.out.println("resposta " );
 		public void run() {
 
 			//			arrToTransmit[0]++;
-
+			Socket socketRemoved = null;
+			
 			for(char c : arrToTransmit) {
 				//System.out.println("entre os for's " + viewers.size());
 				for(Socket viewer : viewers) {
+					ObjectOutputStream out = null;
 					try {
-						ObjectOutputStream out = new ObjectOutputStream(viewer.getOutputStream());
+						out = new ObjectOutputStream(viewer.getOutputStream());
 						int val = (int)c;
 						System.out.println("enviado: " + val);
 						out.writeObject("Stream,"+c);
 						//out.writeObject(val+""); //precisas de enviar 1000 bytes
 					} catch (IOException e) {
-						e.printStackTrace();
+								socketRemoved = viewer;
+								break;
 					}
 				}
+				viewers.remove(socketRemoved);
+				clients.remove(socketRemoved);
 				try {
 					Thread.sleep(50);
 				} catch (InterruptedException e) {
@@ -600,5 +608,4 @@ System.out.println("resposta " );
 			System.out.println("Acabou de transmitir");
 		}
 	}
-
 }
