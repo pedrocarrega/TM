@@ -295,7 +295,6 @@ public class Client {
 		//System.out.println(portS);
 		ServerSocket server = new ServerSocket(portS);
 		Node newNode = new Node(server.accept());
-		Socket newSocket = node.getSocket();
 		//System.out.println("server: " + newSocket.getLocalAddress());
 
 		ObjectInputStream in = newNode.getInputStream(); 
@@ -358,18 +357,19 @@ public class Client {
 		@Override
 		public void run() {
 
-			Socket socketAceite = null;
-			Socket socketRemoved = null;
+			Node nodeAceite = null;
+			Node nodeRemoved;
 			int idStreamCrashed = 0;
+			
 			while(true) {
 				try {
 					//System.out.println("antes de ligar: " + this.socket);
-					socketAceite = this.socket.accept();
-					localIp = socketAceite.getLocalAddress().toString().substring(1);
+					nodeAceite = new Node(this.socket.accept());
+					localIp = nodeAceite.getSocket().getLocalAddress().toString().substring(1);
 
 					//System.out.println("ligou");
 
-					ObjectInputStream inStream = new ObjectInputStream(socketAceite.getInputStream());
+					ObjectInputStream inStream = nodeAceite.getInputStream();
 					//inStream.reset();
 
 
@@ -389,8 +389,7 @@ public class Client {
 					//if(info[0].equals("RandomWalk")) {
 					switch(info[0]) {	
 					case "RandomWalk":
-						socketAceite.close();
-						inStream.close();
+						nodeAceite.close();
 						String[] address = info[2].split(":");
 						int result = checkIfExists(address[0]);
 
@@ -404,11 +403,11 @@ public class Client {
 								if(result < 0) {
 
 									if(!address[0].equals(localIp)) {
-										Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
+										Node newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
 										toAdd.add(newVizinho);
 
 										//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
-										ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
+										ObjectOutputStream outStream = newVizinho.getOutputStream();
 										outStream.flush();
 										outStream.writeObject(1);
 										//System.out.println("Close: " + newVizinho.isClosed());
@@ -423,14 +422,14 @@ public class Client {
 							int ttl = Integer.parseInt(info[1]) - 1;
 							if(ttl > 0) {
 								Random r = new Random();
-								Socket reencaminhar = clients.get(r.nextInt(clients.size()));
+								Node reencaminhar = clients.get(r.nextInt(clients.size()));
 								//System.out.println("vou mandar");
-								ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
+								ObjectOutputStream out = reencaminhar.getOutputStream();
 								out.flush();
 								out.writeObject("RandomWalk," + ttl + "," + info[2]);
 							}else {
 								//System.out.println("Fuck ttl");
-								Socket newVizinho;
+								Node newVizinho;
 								ObjectOutputStream out;
 								/*if(result >= 0) {
 									newVizinho = clients.get(result);
@@ -446,30 +445,29 @@ public class Client {
 									newVizinho.close();
 									out.close();
 								}*/
-								newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
-								out = new ObjectOutputStream(newVizinho.getOutputStream());
+								newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
+								out = newVizinho.getOutputStream();
 								out.flush();
 
 								out.writeObject(-1);
 
 								newVizinho.close();
-								out.close();
 							}
 
 						}
 						break;
 					case "Visualizar":
-						viewers.add(socketAceite);
+						viewers.add(nodeAceite);
 						break;
 					default:
 						synchronized(clients) {
-							toAdd.add(socketAceite);
+							toAdd.add(nodeAceite);
 						}
 						int i = info[1].charAt(0);
 						idStreamCrashed = i;
 						//System.out.println("recebido " + i);
-						for(Socket s : viewers) {
-							ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+						for(Node n : viewers) {
+							ObjectOutputStream out = n.getOutputStream();
 							out.flush();
 							out.writeObject(info[1]);
 						}							
@@ -479,8 +477,8 @@ public class Client {
 					e.printStackTrace();
 				} catch (SocketException e) {
 					//System.out.println("entrou aqui simple server");
-					socketRemoved = socketAceite;
-					String[] addressToRemove = socketRemoved.getRemoteSocketAddress().toString().split(":");
+					nodeRemoved = nodeAceite;
+					String[] addressToRemove = nodeRemoved.getSocket().getRemoteSocketAddress().toString().split(":");
 					removeStreamerTable(idStreamCrashed, addressToRemove[0]);
 					visualizarStream(idStreamCrashed);//em teoria vai buscar outro streamer
 					break;
@@ -488,8 +486,8 @@ public class Client {
 					e.printStackTrace();
 				}
 			}
-			clients.remove(socketRemoved);
-			viewers.remove(socketRemoved);
+			clients.remove(nodeRemoved);
+			viewers.remove(nodeRemoved);
 		}
 
 
@@ -526,13 +524,13 @@ public class Client {
 		@Override
 		public void run() {
 			//boolean run = true;
-			Socket socketRemoved = null;
+			Node nodeRemoved = null;
 			int idStreamCrashed = 0;
 			while(true) {
 
 				System.out.print(""); //ISTO SO CORRE POR CAUSA DISTO!!!
 
-				for(Socket socket : clients) {
+				for(Node node : clients) {
 					ObjectInputStream in = null;
 					try {
 						//System.out.println("before in");
@@ -540,7 +538,7 @@ public class Client {
 							in.reset();
 						}
 
-						in = new ObjectInputStream(socket.getInputStream());
+						in = node.getInputStream();
 						//in.reset();
 
 						String recebido = (String) in.readObject();
@@ -572,9 +570,9 @@ public class Client {
 									if(result < 0) {
 										//System.out.println("listen: " + address[1]);
 										if(!address[0].equals(localIp)) {
-											Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);										
+											Node newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));										
 											toAdd.add(newVizinho);
-											ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
+											ObjectOutputStream outStream = newVizinho.getOutputStream();
 											outStream.flush();
 											outStream.writeObject(1);
 										}else {
@@ -597,15 +595,15 @@ public class Client {
 								if(ttl > 0) {
 									//System.out.println("TTL GOOD");
 									Random r = new Random();
-									Socket reencaminhar = clients.get(r.nextInt(clients.size()));
+									Node reencaminhar = clients.get(r.nextInt(clients.size()));
 									//System.out.println("porta de resposta port=" + socket.getRemoteSocketAddress());
-									ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
+									ObjectOutputStream out = reencaminhar.getOutputStream();
 									out.flush();
 									out.writeObject("RandomWalk," + ttl + "," + info[2]);
 									//System.out.println("mandei");
 								}else {
 									//System.out.println("TTL BAD");
-									Socket newVizinho;
+									Node newVizinho;
 									ObjectOutputStream out;
 									/*if(result >= 0) {
 										newVizinho = clients.get(result);
@@ -623,9 +621,9 @@ public class Client {
 									}*/
 
 									//System.out.println("test: " + address[1] + "ttl: " + ttl);
-									newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
+									newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
 
-									out = new ObjectOutputStream(newVizinho.getOutputStream());
+									out = newVizinho.getOutputStream();
 									out.flush();
 
 									out.writeObject(-1);
@@ -635,7 +633,6 @@ public class Client {
 									//System.out.println("test: " + (Integer.parseInt(address[1])+2));
 
 									newVizinho.close();
-									out.close();
 								}
 							}
 
@@ -662,7 +659,7 @@ public class Client {
 							break;
 						case "Visualizar":
 							//System.out.println("Este adicionou me :" + socket);
-							viewers.add(socket);
+							viewers.add(node);
 							break;
 
 						case "End":
@@ -681,8 +678,8 @@ public class Client {
 							buffer.add(i);
 							idStreamCrashed = i;
 							//System.out.println("recebido " + i);
-							for(Socket s : viewers) {
-								ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+							for(Node n : viewers) {
+								ObjectOutputStream out = n.getOutputStream();
 								out.flush();
 								out.writeObject(recebido);
 							}
@@ -695,9 +692,9 @@ public class Client {
 					} catch (SocketException e) { //socket exception
 						//e.printStackTrace();
 						System.out.println("entrou aqui listen");
-						socketRemoved = socket;
-						toRemove.add(socketRemoved);
-						String[] addressToRemove = socketRemoved.getRemoteSocketAddress().toString().split(":");
+						nodeRemoved = node;
+						toRemove.add(nodeRemoved);
+						String[] addressToRemove = nodeRemoved.getSocket().getRemoteSocketAddress().toString().split(":");
 
 						if(removeStreamerTable(idStreamCrashed, addressToRemove[0])) {
 							visualizarStream(idStreamCrashed); //em teoria vai buscar outro streamer
@@ -716,7 +713,7 @@ public class Client {
 				toRemove.removeAll(toRemove);
 				//viewers.removeAll(toRemove);
 				//clients.remove(socketRemoved);
-				viewers.remove(socketRemoved);
+				viewers.remove(nodeRemoved);
 			}
 		}
 	}
@@ -736,27 +733,27 @@ public class Client {
 		public void run() {
 
 			//			arrToTransmit[0]++;
-			Socket socketRemoved = null;
+			Node nodeRemoved = null;
 			//int counter = 0;
 
 			for(char c : arrToTransmit) {
 				//System.out.println("entre os for's " + viewers.size());
-				for(Socket viewer : viewers) {
+				for(Node viewer : viewers) {
 					ObjectOutputStream out = null;
 					try {
-						out = new ObjectOutputStream(viewer.getOutputStream());
+						out = viewer.getOutputStream();
 						out.flush();
 						int val = (int)c;
 						System.out.println("enviado: " + val);
 						out.writeObject("Stream,"+c+"," + this.streamId);
 						//out.writeObject(val+""); //precisas de enviar 1000 bytes
 					} catch (IOException e) {
-						socketRemoved = viewer;
+						nodeRemoved = viewer;
 						break;
 					}
 				}
-				viewers.remove(socketRemoved);
-				clients.remove(socketRemoved);
+				viewers.remove(nodeRemoved);
+				clients.remove(nodeRemoved);
 				try {
 					Thread.sleep(50);
 				} catch (InterruptedException e) {
@@ -785,8 +782,8 @@ public class Client {
 			while(true) {
 				if(clients.size() > 0 && clients.size() < MAX_CLIENT_SIZE - 15) {
 					for (int i = 0; i < 15; i++) {
-						Socket s = clients.get(r.nextInt(clients.size()));
-						String[] info = s.getRemoteSocketAddress().toString().substring(1).split(":");
+						Node n = clients.get(r.nextInt(clients.size()));
+						String[] info = n.getSocket().getRemoteSocketAddress().toString().substring(1).split(":");
 						try {
 							randomWalk(info[0], info[1]);
 						} catch (NumberFormatException | ClassNotFoundException | IOException e) {
