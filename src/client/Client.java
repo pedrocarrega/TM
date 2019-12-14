@@ -53,7 +53,7 @@ public class Client {
 
 			IntStream.range(0, MAX_CLIENT_SIZE).forEach((int i) -> {
 				try {
-					System.out.println("random: " + i);
+					//System.out.println("random: " + i);
 					randomWalk(initialIp, initialPort);
 				} catch (NumberFormatException | ClassNotFoundException | IOException e) {
 					e.printStackTrace();
@@ -116,8 +116,7 @@ public class Client {
 			for(Node n : clients) {
 				n.close();
 			}
-		}		
-
+		}
 		sc.close();
 	}
 
@@ -295,7 +294,7 @@ public class Client {
 		//System.out.println(portS);
 		ServerSocket server = new ServerSocket(portS);
 		Node newNode = new Node(server.accept());
-		//System.out.println("server: " + newSocket.getLocalAddress());
+		//System.out.println("server: " + newNode.getSocket().getLocalAddress());
 
 		ObjectInputStream in = newNode.getInputStream(); 
 		//fica preso AQUI caso tenhamos 1+ clientes
