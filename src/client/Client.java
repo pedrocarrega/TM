@@ -379,12 +379,17 @@ public class Client {
 							synchronized (clients) {
 
 								if(result < 0) {
-									toAdd.add(newVizinho);
+									
+									if(!address[0].equals(localIp)) {
+										toAdd.add(newVizinho);
 
 									//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
 									ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
 									outStream.writeObject(1);
 									//System.out.println("Close: " + newVizinho.isClosed());
+									}else {
+										result = 0;
+									}
 								}
 
 							}
@@ -536,12 +541,17 @@ public class Client {
 									if(result < 0) {
 										System.out.println("listen: " + address[1]);
 										Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
-										toAdd.add(newVizinho);
+										if(!address[0].equals(localIp)) {
+											toAdd.add(newVizinho);
+											ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
+										outStream.writeObject(1);
+										}else {
+											result = 0;
+										}
 										//clients.add(newVizinho);
 										//newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
 										//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
-										ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
-										outStream.writeObject(1);
+										
 										//outStream.close();//fechar a socket que manda a resposta
 										//newVizinho.close();
 									}
@@ -551,14 +561,15 @@ public class Client {
 							if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
 								
 								int ttl = Integer.parseInt(info[1]) - 1;
-								System.out.println("TTL: "+ ttl);								
+								System.out.println("TTL: "+ ttl);
 								if(ttl > 0) {
 									//System.out.println("TTL GOOD");
 									Random r = new Random();
 									Socket reencaminhar = clients.get(r.nextInt(clients.size()));
-									//System.out.println("porta de resposta port=" + socket.getRemoteSocketAddress());
+									System.out.println("porta de resposta port=" + socket.getRemoteSocketAddress());
 									ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
 									out.writeObject("RandomWalk," + ttl + "," + info[2]);
+									System.out.println("mandei");
 								}else {
 									//System.out.println("TTL BAD");
 									Socket newVizinho;
