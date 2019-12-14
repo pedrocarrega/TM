@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.IntStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -32,6 +33,7 @@ public class Client {
 	private final static int probToGossip = 70;
 	private static List<Integer> streams;
 	private static int TIME_TO_GOSSIP = 15000;//5s por cada gossip
+	private static LinkedBlockingQueue buffer = new LinkedBlockingQueue<>(BUFFER_SIZE) ;
 
 	public static void main(String[] args) throws NumberFormatException, UnknownHostException, ClassNotFoundException, IOException, InterruptedException {
 
@@ -81,6 +83,7 @@ public class Client {
 						visualizarStream(Integer.parseInt(escolhaVis));
 						verifierVisualiza = false;
 						System.out.println("Esta a assistir ao canal " + escolhaVis);
+						verStream(escolhaVis);
 					}else {
 						if(tabela.size() == 0) {
 							System.out.println("De momento nao existem streams disponiveis");
@@ -118,6 +121,15 @@ public class Client {
 		}		
 
 		sc.close();
+	}
+
+
+	private static void verStream(String escolhaVis) throws InterruptedException {
+		while (tabela.containsKey(escolhaVis) || !buffer.isEmpty()){
+			System.out.println("Recebi" + buffer.remove());
+			Thread.sleep(TIME_BETWEEN_FRAMES);
+		}
+		
 	}
 
 
@@ -496,6 +508,8 @@ public class Client {
 
 		public Listen() {}
 
+		
+		
 		@SuppressWarnings("unused")
 		@Override
 		public void run() {
@@ -648,8 +662,9 @@ public class Client {
 						default:
 							//Caso que recebe dados de uma transmissao
 							int i = info[1].charAt(0);
+							buffer.add(i);
 							idStreamCrashed = i;
-							System.out.println("recebido " + i);
+							//System.out.println("recebido " + i);
 							for(Socket s : viewers) {
 								ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
 								out.writeObject(recebido);
