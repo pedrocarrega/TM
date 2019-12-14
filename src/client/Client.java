@@ -374,19 +374,20 @@ public class Client {
 						if(clients.size() < MAX_CLIENT_SIZE) {
 
 							//System.out.println(address[0] + " " + Integer.parseInt(address[1]));
-							Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
+
 
 							synchronized (clients) {
 
 								if(result < 0) {
-									
+
 									if(!address[0].equals(localIp)) {
+										Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
 										toAdd.add(newVizinho);
 
-									//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
-									ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
-									outStream.writeObject(1);
-									//System.out.println("Close: " + newVizinho.isClosed());
+										//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
+										ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
+										outStream.writeObject(1);
+										//System.out.println("Close: " + newVizinho.isClosed());
 									}else {
 										result = 0;
 									}
@@ -489,7 +490,7 @@ public class Client {
 	 * nos pedir para o adicionar � lista de viewers da stream
 	 */
 	private static class Listen extends Thread implements Runnable{
-		
+
 		public Listen() {}
 
 		@SuppressWarnings("unused")
@@ -540,18 +541,18 @@ public class Client {
 
 									if(result < 0) {
 										System.out.println("listen: " + address[1]);
-										Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
 										if(!address[0].equals(localIp)) {
+											Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);										
 											toAdd.add(newVizinho);
 											ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
-										outStream.writeObject(1);
+											outStream.writeObject(1);
 										}else {
 											result = 0;
 										}
 										//clients.add(newVizinho);
 										//newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
 										//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
-										
+
 										//outStream.close();//fechar a socket que manda a resposta
 										//newVizinho.close();
 									}
@@ -559,7 +560,7 @@ public class Client {
 								}
 							}
 							if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
-								
+
 								int ttl = Integer.parseInt(info[1]) - 1;
 								System.out.println("TTL: "+ ttl);
 								if(ttl > 0) {
@@ -588,14 +589,16 @@ public class Client {
 										newVizinho.close();
 										out.close();
 									}*/
-									
-									System.out.println("test: " + (address[1]+2) + "ttl: " + ttl);
+
+									System.out.println("test: " + address[1] + "ttl: " + ttl);
 									newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
-									
+
 									out = new ObjectOutputStream(newVizinho.getOutputStream());
 
 									out.writeObject(-1);
-									
+
+									System.out.println("mandei2");
+
 									//System.out.println("test: " + (Integer.parseInt(address[1])+2));
 
 									newVizinho.close();
@@ -660,18 +663,18 @@ public class Client {
 						socketRemoved = socket;
 						toRemove.add(socketRemoved);
 						String[] addressToRemove = socketRemoved.getRemoteSocketAddress().toString().split(":");
-						
+
 						if(removeStreamerTable(idStreamCrashed, addressToRemove[0])) {
 							visualizarStream(idStreamCrashed); //em teoria vai buscar outro streamer
 						}
-						
+
 						break;
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 
 				}
-				
+
 				clients.addAll(toAdd);
 				clients.removeAll(toRemove);
 				//viewers.removeAll(toRemove);
