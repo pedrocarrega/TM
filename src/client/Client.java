@@ -274,7 +274,7 @@ public class Client {
 		System.out.println(portS);
 		ServerSocket server = new ServerSocket(portS);
 		Socket newSocket = server.accept();
-		System.out.println("server: " + newSocket.getLocalPort());
+		System.out.println("server: " + newSocket.getLocalAddress());
 
 		ObjectInputStream in = new ObjectInputStream(newSocket.getInputStream()); 
 		//fica preso AQUI caso tenhamos 1+ clientes
@@ -595,7 +595,9 @@ public class Client {
 									out = new ObjectOutputStream(newVizinho.getOutputStream());
 
 									out.writeObject(-1);
-									out.flush();
+									
+									Thread.sleep(1000);
+
 									//System.out.println("test: " + (Integer.parseInt(address[1])+2));
 
 									newVizinho.close();
@@ -667,6 +669,9 @@ public class Client {
 						
 						break;
 					} catch (IOException e) {
+						e.printStackTrace();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 
