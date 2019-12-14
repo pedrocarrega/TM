@@ -20,10 +20,10 @@ public class Client {
 
 	private static final long TIME_BETWEEN_FRAMES = 150;
 	private static final int TTL = 5;
-	private static List<Socket> viewers;
-	private static List<Socket> toAdd = new ArrayList<>();
-	private static List<Socket> toRemove = new ArrayList<>();
-	private static List<Socket> clients;
+	private static List<Node> viewers;
+	private static List<Node> toAdd = new ArrayList<>();
+	private static List<Node> toRemove = new ArrayList<>();
+	private static List<Node> clients;
 	private static Map<Integer, List<String>> tabela;
 	private static final int MAX_CLIENT_SIZE = 30;
 	private static final int THREASHOLD_VIZINHOS = 5;
@@ -41,7 +41,7 @@ public class Client {
 
 
 
-		viewers = new ArrayList<Socket>();
+		viewers = new ArrayList<Node>();
 		tabela = new HashMap<>();
 		new ArrayList<Socket>();
 
@@ -113,8 +113,8 @@ public class Client {
 		}
 
 		synchronized (clients) {
-			for(Socket s : clients) {
-				s.close();
+			for(Node n : clients) {
+				n.close();
 			}
 		}		
 
@@ -172,18 +172,18 @@ public class Client {
 				probGossip = 100;
 			}
 
-			List<Socket> gossip = new ArrayList<>();
+			List<Node> gossip = new ArrayList<>();
 
 			int size = (clients.size()*probGossip)/100;
 
 			Random r = new Random();
 
 			for(int i = 0; i < size; i++) {
-				Socket temp = clients.get(r.nextInt(clients.size()));
+				Node temp = clients.get(r.nextInt(clients.size()));
 				if(!gossip.contains(temp)) {
 					gossip.add(temp);
 					try {
-						ObjectOutputStream out = new ObjectOutputStream(temp.getOutputStream());
+						ObjectOutputStream out = temp.getOutputStream();
 						out.flush();
 						out.writeObject(string);
 					} catch (IOException e) {
@@ -206,12 +206,12 @@ public class Client {
 
 			int response = checkIfExists(streamerEscolhido);
 
-			Socket streamer = null;
+			Node streamer = null;
 			if(response >= 0) {
 				streamer = clients.get(response);
 			}else {
 				try {
-					streamer = new Socket(streamerEscolhido, 12345);
+					streamer = new Node(new Socket(streamerEscolhido, 12345));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -219,7 +219,7 @@ public class Client {
 			//System.out.println("Stream: " + streamer);
 			ObjectOutputStream out;
 			try {
-				out = new ObjectOutputStream(streamer.getOutputStream());
+				out = streamer.getOutputStream();
 				out.flush();
 				out.writeObject("Visualizar,");
 			} catch (IOException e) {
@@ -257,7 +257,8 @@ public class Client {
 
 	private static void randomWalk(String ip, String port) throws NumberFormatException, UnknownHostException, IOException, ClassNotFoundException {
 
-		Socket socket = null;
+		Node node;
+		Socket socket;
 		int result = -1;
 		int portS;
 		
@@ -269,16 +270,18 @@ public class Client {
 
 		}
 		if(result < 0) {
-			socket = new Socket(ip, Integer.parseInt(port));
+			node = new Node(new Socket(ip, Integer.parseInt(port)));
+			socket = node.getSocket();
 			portS = socket.getLocalPort()+2;
 			localIp = socket.getLocalAddress().toString().substring(1);
 		}else {
-			socket = clients.get(result);
+			node = clients.get(result);
+			socket = node.getSocket();
 			//System.out.println(socket);
 			portS = socket.getLocalPort()+2;
 		}
 
-		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
+		ObjectOutputStream outStream = node.getOutputStream();
 		outStream.flush();
 
 		//System.out.println(socket.getLocalSocketAddress().toString().substring(1));
@@ -291,10 +294,11 @@ public class Client {
 		}
 		//System.out.println(portS);
 		ServerSocket server = new ServerSocket(portS);
-		Socket newSocket = server.accept();
+		Node newNode = new Node(server.accept());
+		Socket newSocket = node.getSocket();
 		//System.out.println("server: " + newSocket.getLocalAddress());
 
-		ObjectInputStream in = new ObjectInputStream(newSocket.getInputStream()); 
+		ObjectInputStream in = newNode.getInputStream(); 
 		//fica preso AQUI caso tenhamos 1+ clientes
 
 		//System.out.println("resposta " );
@@ -306,14 +310,13 @@ public class Client {
 
 			synchronized (clients) {
 
-				toAdd.add(newSocket);
+				toAdd.add(newNode);
 				System.out.println("entrou");
 
 			}
 		}else {
 			//System.out.println("Errors");
-			newSocket.close();
-			in.close();
+			newNode.close();
 
 		}
 
@@ -325,7 +328,8 @@ public class Client {
 
 		int counter = 0;
 
-		for(Socket compare : clients) {
+		for(Node node : clients) {
+			Socket compare = node.getSocket();
 			String[] something = (compare.getRemoteSocketAddress().toString().substring(1)).split(":");
 
 			if(ipCompare.equals(something[0])) {
