@@ -59,10 +59,10 @@ public class Client {
 					e.printStackTrace();
 				}
 			});
-		}else {
+		}//else {
 			SimpleServer server = new SimpleServer(12345);
 			server.start();
-		}
+		//}
 
 		streams = new ArrayList<>();
 		SporadicGossip gossipTemporal = new SporadicGossip();//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
