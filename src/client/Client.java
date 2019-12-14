@@ -404,7 +404,7 @@ public class Client {
 								ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
 								out.writeObject("RandomWalk," + ttl + "," + info[2]);
 							}else {
-								System.out.println("Fuck ttl");
+								//System.out.println("Fuck ttl");
 								Socket newVizinho;
 								ObjectOutputStream out;
 								/*if(result >= 0) {
@@ -483,11 +483,11 @@ public class Client {
 
 	/*
 	 * Usado para comunica�ao entre sockets que ja estao abertas
-	 * ou seja random walks com alguem que j� foi adicionado aos vizinhos
+	 * ou seja random walks com alguem que ja foi adicionado aos vizinhos
 	 * ou entao para receber gossip dos vizinhos e saber propaga-lo
 	 * Tamebm tem de incluir os casos em que a pessoa que ira assistir
 	 * ah nossa stream ja seja nossa vizinha e use essa socket para 
-	 * nos pedir para o adicionar � lista de viewers da stream
+	 * nos pedir para o adicionar a lista de viewers da stream
 	 */
 	private static class Listen extends Thread implements Runnable{
 
@@ -567,7 +567,7 @@ public class Client {
 									//System.out.println("TTL GOOD");
 									Random r = new Random();
 									Socket reencaminhar = clients.get(r.nextInt(clients.size()));
-									System.out.println("porta de resposta port=" + socket.getRemoteSocketAddress());
+									//System.out.println("porta de resposta port=" + socket.getRemoteSocketAddress());
 									ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
 									out.writeObject("RandomWalk," + ttl + "," + info[2]);
 									//System.out.println("mandei");
