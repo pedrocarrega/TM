@@ -19,12 +19,11 @@ import java.net.UnknownHostException;
 public class Client {
 
 	private static final long TIME_BETWEEN_FRAMES = 1500;
-	private static final int BUFFER_SIZE = 5;
+	private static final int BUFFER_SIZE = 100;
 	private static final int TTL = 5;
 	private static List<Socket> viewers;
 	private static List<Socket> toAdd = new ArrayList<>();
 	private static List<Socket> toRemove = new ArrayList<>();
-	private static List<Socket> transmissores;
 	private static List<Socket> clients;
 	private static Map<Integer, List<String>> tabela;
 	private static final int MAX_CLIENT_SIZE = 30;
@@ -33,7 +32,7 @@ public class Client {
 	private final static int probToGossip = 70;
 	private static List<Integer> streams;
 	private static int TIME_TO_GOSSIP = 15000;//5s por cada gossip
-	private static LinkedBlockingQueue buffer = new LinkedBlockingQueue<>(BUFFER_SIZE) ;
+	private static LinkedBlockingQueue<Integer> buffer = new LinkedBlockingQueue<>(BUFFER_SIZE) ;
 
 	public static void main(String[] args) throws NumberFormatException, UnknownHostException, ClassNotFoundException, IOException, InterruptedException {
 
@@ -45,7 +44,7 @@ public class Client {
 
 		viewers = new ArrayList<Socket>();
 		tabela = new HashMap<>();
-		transmissores = new ArrayList<Socket>();
+		new ArrayList<Socket>();
 
 		Listen listen = new Listen();
 		listen.start();
@@ -83,7 +82,7 @@ public class Client {
 						visualizarStream(Integer.parseInt(escolhaVis));
 						verifierVisualiza = false;
 						System.out.println("Esta a assistir ao canal " + escolhaVis);
-						verStream(escolhaVis);
+						verStream(Integer.parseInt(escolhaVis));
 					}else {
 						if(tabela.size() == 0) {
 							System.out.println("De momento nao existem streams disponiveis");
@@ -124,11 +123,11 @@ public class Client {
 	}
 
 
-	private static void verStream(String escolhaVis) throws InterruptedException {
-		while (tabela.containsKey(escolhaVis) || !buffer.isEmpty()){
+	private static void verStream(int escolhaVis) throws InterruptedException {
+		do{
 			System.out.println("Recebi" + buffer.remove());
 			Thread.sleep(TIME_BETWEEN_FRAMES);
-		}
+		}while (tabela.containsKey(escolhaVis) || !buffer.isEmpty());
 		
 	}
 
