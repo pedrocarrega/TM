@@ -18,8 +18,7 @@ import java.net.UnknownHostException;
 
 public class Client {
 
-	private static final long TIME_BETWEEN_FRAMES = 1500;
-	private static final int BUFFER_SIZE = 100;
+	private static final long TIME_BETWEEN_FRAMES = 150;
 	private static final int TTL = 5;
 	private static List<Socket> viewers;
 	private static List<Socket> toAdd = new ArrayList<>();
@@ -32,7 +31,7 @@ public class Client {
 	private final static int probToGossip = 70;
 	private static List<Integer> streams;
 	private static int TIME_TO_GOSSIP = 15000;//5s por cada gossip
-	private static LinkedBlockingQueue<Integer> buffer = new LinkedBlockingQueue<>(BUFFER_SIZE) ;
+	private static LinkedBlockingQueue<Integer> buffer = new LinkedBlockingQueue<>() ;
 
 	public static void main(String[] args) throws NumberFormatException, UnknownHostException, ClassNotFoundException, IOException, InterruptedException {
 
@@ -729,6 +728,7 @@ public class Client {
 					ObjectOutputStream out = null;
 					try {
 						out = new ObjectOutputStream(viewer.getOutputStream());
+						out.reset();
 						int val = (int)c;
 						System.out.println("enviado: " + val);
 						out.writeObject("Stream,"+c+"," + this.streamId);
