@@ -461,12 +461,14 @@ public class Client {
 
 	}
 
-	private static void removeStreamerTable(int idStreamCrashed, String userCrashed) {
+	private static boolean removeStreamerTable(int idStreamCrashed, String userCrashed) {
 
 		List<String> streamers = tabela.get(idStreamCrashed);
 
 		if(streamers != null) {
-			streamers.remove(userCrashed);
+			return streamers.remove(userCrashed);
+		}else {
+			return false;
 		}
 	}
 
@@ -636,8 +638,11 @@ public class Client {
 						System.out.println("entrou aqui listen");
 						socketRemoved = socket;
 						String[] addressToRemove = socketRemoved.getRemoteSocketAddress().toString().split(":");
-						removeStreamerTable(idStreamCrashed, addressToRemove[0]);
-						visualizarStream(idStreamCrashed);//em teoria vai buscar outro streamer
+						
+						if(removeStreamerTable(idStreamCrashed, addressToRemove[0])) {
+							visualizarStream(idStreamCrashed); //em teoria vai buscar outro streamer
+						}
+						
 						break;
 					} catch (IOException e) {
 						e.printStackTrace();
