@@ -7,10 +7,10 @@ import java.net.Socket;
 
 public class Node {
 	
-	public Socket socket;
-	public ObjectOutputStream out;
-	public ObjectInputStream in;
-	
+	private Socket socket;
+	private ObjectOutputStream out;
+	private ObjectInputStream in;
+
 	public Node(Socket socket) throws IOException {
 		this.socket = socket;
 		this.in = new ObjectInputStream(this.socket.getInputStream());
@@ -28,6 +28,18 @@ public class Node {
 		in.close();
 		socket.close();
 		
+	}
+	
+	public Socket getSocket() {
+		return socket;
+	}
+
+	public ObjectOutputStream getOutputStream() {
+		return out;
+	}
+
+	public ObjectInputStream getInputStream() {
+		return in;
 	}
 
 }
