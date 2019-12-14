@@ -23,4 +23,11 @@ public class Node {
 		this.out = out;
 	}
 
+	public void close() throws IOException {
+		out.close();
+		in.close();
+		socket.close();
+		
+	}
+
 }
