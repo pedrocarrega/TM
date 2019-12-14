@@ -217,7 +217,7 @@ public class Client {
 				streams.add(idCanalVis);
 			}
 		}else {
-			System.out.println("Não existem mais transmissores da stream, terá de aguardar até que seja encontrada um novo");
+			System.out.println("Nao existem mais transmissores da stream, tera de aguardar ate que seja encontrada um novo");
 		}
 	}
 
