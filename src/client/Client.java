@@ -589,15 +589,13 @@ public class Client {
 										out.close();
 									}*/
 									
-									System.out.println("test: " + (address[1]+2));
+									System.out.println("test: " + (address[1]+2) + "ttl: " + ttl);
 									newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
 									
 									out = new ObjectOutputStream(newVizinho.getOutputStream());
 
 									out.writeObject(-1);
 									
-									Thread.sleep(1000);
-
 									//System.out.println("test: " + (Integer.parseInt(address[1])+2));
 
 									newVizinho.close();
@@ -669,9 +667,6 @@ public class Client {
 						
 						break;
 					} catch (IOException e) {
-						e.printStackTrace();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 
