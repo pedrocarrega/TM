@@ -19,7 +19,7 @@ public class Client {
 
 	private static final long TIME_BETWEEN_FRAMES = 1500;
 	private static final int BUFFER_SIZE = 5;
-	private static final int TTL = 15;
+	private static final int TTL = 5;
 	private static List<Socket> viewers;
 	private static List<Socket> toAdd = new ArrayList<>();
 	private static List<Socket> toRemove = new ArrayList<>();
@@ -31,7 +31,7 @@ public class Client {
 	private static String localIp;
 	private final static int probToGossip = 70;
 	private static List<Integer> streams;
-	private static int TIME_TO_GOSSIP = 5000;//5s por cada gossip
+	private static int TIME_TO_GOSSIP = 15000;//5s por cada gossip
 
 	public static void main(String[] args) throws NumberFormatException, UnknownHostException, ClassNotFoundException, IOException, InterruptedException {
 
@@ -649,7 +649,7 @@ public class Client {
 							//Caso que recebe dados de uma transmissao
 							int i = info[1].charAt(0);
 							idStreamCrashed = i;
-							//System.out.println("recebido " + i);
+							System.out.println("recebido " + i);
 							for(Socket s : viewers) {
 								ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
 								out.writeObject(recebido);
@@ -752,7 +752,7 @@ public class Client {
 			while(true) {
 				if(clients.size() > 0 && clients.size() < MAX_CLIENT_SIZE - 15) {
 					for (int i = 0; i < 15; i++) {
-						Socket s = clients.get(r.nextInt());
+						Socket s = clients.get(r.nextInt(clients.size()));
 						String[] info = s.getRemoteSocketAddress().toString().substring(1).split(":");
 						try {
 							randomWalk(info[0], info[1]);
