@@ -398,6 +398,7 @@ public class Client {
 								ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
 								out.writeObject("RandomWalk," + ttl + "," + info[2]);
 							}else {
+								System.out.println("Fuck ttl");
 								Socket newVizinho;
 								ObjectOutputStream out;
 								/*if(result >= 0) {
@@ -574,9 +575,10 @@ public class Client {
 										newVizinho.close();
 										out.close();
 									}*/
+									
+									System.out.println("test: " + (address[1]+2));
 									newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
-									System.out.println((address[1]+2));
-
+									
 									out = new ObjectOutputStream(newVizinho.getOutputStream());
 
 									out.writeObject(-1);
