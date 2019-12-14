@@ -245,6 +245,8 @@ public class Client {
 		Socket socket = null;
 		int result = -1;
 		int portS;
+		
+		System.out.println("Size: " + clients.size());
 
 		synchronized (clients) {
 
@@ -677,6 +679,7 @@ public class Client {
 
 				clients.addAll(toAdd);
 				clients.removeAll(toRemove);
+				toAdd.removeAll(toAdd);
 				//viewers.removeAll(toRemove);
 				//clients.remove(socketRemoved);
 				viewers.remove(socketRemoved);
