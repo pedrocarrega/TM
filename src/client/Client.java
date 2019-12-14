@@ -271,10 +271,10 @@ public class Client {
 			socket.close();
 			outStream.close();
 		}
-		System.out.println(portS);
+		//System.out.println(portS);
 		ServerSocket server = new ServerSocket(portS);
 		Socket newSocket = server.accept();
-		System.out.println("server: " + newSocket.getLocalAddress());
+		//System.out.println("server: " + newSocket.getLocalAddress());
 
 		ObjectInputStream in = new ObjectInputStream(newSocket.getInputStream()); 
 		//fica preso AQUI caso tenhamos 1+ clientes
@@ -441,7 +441,7 @@ public class Client {
 						}
 						int i = info[1].charAt(0);
 						idStreamCrashed = i;
-						System.out.println("recebido " + i);
+						//System.out.println("recebido " + i);
 						for(Socket s : viewers) {
 							ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
 							out.writeObject(info[1]);
@@ -451,7 +451,7 @@ public class Client {
 				} catch ( ClassNotFoundException e) {
 					e.printStackTrace();
 				} catch (SocketException e) {
-					System.out.println("entrou aqui simple server");
+					//System.out.println("entrou aqui simple server");
 					socketRemoved = socketAceite;
 					String[] addressToRemove = socketRemoved.getRemoteSocketAddress().toString().split(":");
 					removeStreamerTable(idStreamCrashed, addressToRemove[0]);
@@ -540,7 +540,7 @@ public class Client {
 								synchronized (clients) {
 
 									if(result < 0) {
-										System.out.println("listen: " + address[1]);
+										//System.out.println("listen: " + address[1]);
 										if(!address[0].equals(localIp)) {
 											Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);										
 											toAdd.add(newVizinho);
@@ -570,7 +570,7 @@ public class Client {
 									System.out.println("porta de resposta port=" + socket.getRemoteSocketAddress());
 									ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
 									out.writeObject("RandomWalk," + ttl + "," + info[2]);
-									System.out.println("mandei");
+									//System.out.println("mandei");
 								}else {
 									//System.out.println("TTL BAD");
 									Socket newVizinho;
@@ -590,14 +590,14 @@ public class Client {
 										out.close();
 									}*/
 
-									System.out.println("test: " + address[1] + "ttl: " + ttl);
+									//System.out.println("test: " + address[1] + "ttl: " + ttl);
 									newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
 
 									out = new ObjectOutputStream(newVizinho.getOutputStream());
 
 									out.writeObject(-1);
 
-									System.out.println("mandei2");
+									//System.out.println("mandei2");
 
 									//System.out.println("test: " + (Integer.parseInt(address[1])+2));
 
@@ -646,7 +646,7 @@ public class Client {
 							//Caso que recebe dados de uma transmissao
 							int i = info[1].charAt(0);
 							idStreamCrashed = i;
-							System.out.println("recebido " + i);
+							//System.out.println("recebido " + i);
 							for(Socket s : viewers) {
 								ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
 								out.writeObject(recebido);
