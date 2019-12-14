@@ -174,6 +174,7 @@ public class Client {
 						ObjectOutputStream out = new ObjectOutputStream(temp.getOutputStream());
 						out.writeObject(string);
 					} catch (IOException e) {
+						toRemove.add(temp);
 						e.printStackTrace();
 					}
 				}
@@ -680,6 +681,7 @@ public class Client {
 				clients.addAll(toAdd);
 				clients.removeAll(toRemove);
 				toAdd.removeAll(toAdd);
+				toRemove.removeAll(toRemove);
 				//viewers.removeAll(toRemove);
 				//clients.remove(socketRemoved);
 				viewers.remove(socketRemoved);
@@ -744,8 +746,21 @@ public class Client {
 
 		@Override
 		public void run() {
+			
+			Random r = new Random();
 
 			while(true) {
+				if(clients.size() > 0 && clients.size() < MAX_CLIENT_SIZE - 15) {
+					for (int i = 0; i < 15; i++) {
+						Socket s = clients.get(r.nextInt());
+						String[] info = s.getRemoteSocketAddress().toString().substring(1).split(":");
+						try {
+							randomWalk(info[0], info[1]);
+						} catch (NumberFormatException | ClassNotFoundException | IOException e) {
+							e.printStackTrace();
+						}
+					}
+				}
 				for(int idStream : streams) {
 					informaVizinhos("Gossip," + idStream + "," + localIp + "," + TTL);
 				}
