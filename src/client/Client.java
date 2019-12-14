@@ -549,7 +549,9 @@ public class Client {
 								}
 							}
 							if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
+								
 								int ttl = Integer.parseInt(info[1]) - 1;
+								System.out.println("TTL: "+ ttl);								
 								if(ttl > 0) {
 									//System.out.println("TTL GOOD");
 									Random r = new Random();
