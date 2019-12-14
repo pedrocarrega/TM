@@ -184,6 +184,7 @@ public class Client {
 					gossip.add(temp);
 					try {
 						ObjectOutputStream out = new ObjectOutputStream(temp.getOutputStream());
+						out.reset();
 						out.writeObject(string);
 					} catch (IOException e) {
 						toRemove.add(temp);
