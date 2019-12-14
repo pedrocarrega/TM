@@ -13,8 +13,8 @@ public class Node {
 
 	public Node(Socket socket) throws IOException {
 		this.socket = socket;
-		this.in = new ObjectInputStream(this.socket.getInputStream());
 		this.out = new ObjectOutputStream(this.socket.getOutputStream());
+		this.in = new ObjectInputStream(this.socket.getInputStream());
 	}
 	
 	public Node(Socket socket, ObjectOutputStream out, ObjectInputStream in){
