@@ -21,6 +21,8 @@ public class Client {
 	private static final int BUFFER_SIZE = 5;
 	private static final int TTL = 15;
 	private static List<Socket> viewers;
+	private static List<Socket> toAdd = new ArrayList<>();
+	private static List<Socket> toRemove = new ArrayList<>();
 	private static List<Socket> transmissores;
 	private static List<Socket> clients;
 	private static Map<Integer, List<String>> tabela;
@@ -286,8 +288,8 @@ public class Client {
 
 			synchronized (clients) {
 
-				clients.add(newSocket);
-				//System.out.println("entrou");
+				toAdd.add(newSocket);
+				System.out.println("entrou");
 
 			}
 		}else {
@@ -377,7 +379,7 @@ public class Client {
 							synchronized (clients) {
 
 								if(result < 0) {
-									clients.add(newVizinho);
+									toAdd.add(newVizinho);
 
 									//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
 									ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
@@ -428,7 +430,7 @@ public class Client {
 						break;
 					default:
 						synchronized(clients) {
-							clients.add(socketAceite);
+							toAdd.add(socketAceite);
 						}
 						int i = info[1].charAt(0);
 						idStreamCrashed = i;
@@ -481,7 +483,7 @@ public class Client {
 	 * nos pedir para o adicionar � lista de viewers da stream
 	 */
 	private static class Listen extends Thread implements Runnable{
-
+		
 		public Listen() {}
 
 		@SuppressWarnings("unused")
@@ -531,14 +533,16 @@ public class Client {
 								synchronized (clients) {
 
 									if(result < 0) {
-										Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
-										clients.add(newVizinho);
-										newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
+										System.out.println("listen: " + address[1]);
+										Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
+										toAdd.add(newVizinho);
+										//clients.add(newVizinho);
+										//newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
 										//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
 										ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
 										outStream.writeObject(1);
-										outStream.close();//fechar a socket que manda a resposta
-										newVizinho.close();
+										//outStream.close();//fechar a socket que manda a resposta
+										//newVizinho.close();
 									}
 
 								}
@@ -571,6 +575,7 @@ public class Client {
 										out.close();
 									}*/
 									newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
+									System.out.println((address[1]+2));
 
 									out = new ObjectOutputStream(newVizinho.getOutputStream());
 
@@ -635,8 +640,10 @@ public class Client {
 					} catch (ClassNotFoundException e) {
 						e.printStackTrace();
 					} catch (SocketException e) { //socket exception
+						e.printStackTrace();
 						System.out.println("entrou aqui listen");
 						socketRemoved = socket;
+						toRemove.add(socketRemoved);
 						String[] addressToRemove = socketRemoved.getRemoteSocketAddress().toString().split(":");
 						
 						if(removeStreamerTable(idStreamCrashed, addressToRemove[0])) {
@@ -649,7 +656,11 @@ public class Client {
 					}
 
 				}
-				clients.remove(socketRemoved);
+				
+				clients.addAll(toAdd);
+				clients.removeAll(toRemove);
+				//viewers.removeAll(toRemove);
+				//clients.remove(socketRemoved);
 				viewers.remove(socketRemoved);
 			}
 		}
