@@ -184,7 +184,7 @@ public class Client {
 					gossip.add(temp);
 					try {
 						ObjectOutputStream out = new ObjectOutputStream(temp.getOutputStream());
-						out.reset();
+						out.flush();
 						out.writeObject(string);
 					} catch (IOException e) {
 						toRemove.add(temp);
@@ -220,6 +220,7 @@ public class Client {
 			ObjectOutputStream out;
 			try {
 				out = new ObjectOutputStream(streamer.getOutputStream());
+				out.flush();
 				out.writeObject("Visualizar,");
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -278,6 +279,7 @@ public class Client {
 		}
 
 		ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
+		outStream.flush();
 
 		//System.out.println(socket.getLocalSocketAddress().toString().substring(1));
 
@@ -364,7 +366,7 @@ public class Client {
 					//System.out.println("ligou");
 
 					ObjectInputStream inStream = new ObjectInputStream(socketAceite.getInputStream());
-					inStream.reset();
+					//inStream.reset();
 
 
 					//String[] info = ((String)inStream.readObject()).split(",");
@@ -403,6 +405,7 @@ public class Client {
 
 										//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
 										ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
+										outStream.flush();
 										outStream.writeObject(1);
 										//System.out.println("Close: " + newVizinho.isClosed());
 									}else {
@@ -419,6 +422,7 @@ public class Client {
 								Socket reencaminhar = clients.get(r.nextInt(clients.size()));
 								//System.out.println("vou mandar");
 								ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
+								out.flush();
 								out.writeObject("RandomWalk," + ttl + "," + info[2]);
 							}else {
 								//System.out.println("Fuck ttl");
@@ -440,6 +444,7 @@ public class Client {
 								}*/
 								newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
 								out = new ObjectOutputStream(newVizinho.getOutputStream());
+								out.flush();
 
 								out.writeObject(-1);
 
@@ -461,6 +466,7 @@ public class Client {
 						//System.out.println("recebido " + i);
 						for(Socket s : viewers) {
 							ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+							out.flush();
 							out.writeObject(info[1]);
 						}							
 						break;
@@ -531,7 +537,7 @@ public class Client {
 						}
 
 						in = new ObjectInputStream(socket.getInputStream());
-						in.reset();
+						//in.reset();
 
 						String recebido = (String) in.readObject();
 						String[] info = new String[1];
@@ -565,6 +571,7 @@ public class Client {
 											Socket newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);										
 											toAdd.add(newVizinho);
 											ObjectOutputStream outStream = new ObjectOutputStream(newVizinho.getOutputStream());
+											outStream.flush();
 											outStream.writeObject(1);
 										}else {
 											result = 0;
@@ -589,6 +596,7 @@ public class Client {
 									Socket reencaminhar = clients.get(r.nextInt(clients.size()));
 									//System.out.println("porta de resposta port=" + socket.getRemoteSocketAddress());
 									ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
+									out.flush();
 									out.writeObject("RandomWalk," + ttl + "," + info[2]);
 									//System.out.println("mandei");
 								}else {
@@ -614,6 +622,7 @@ public class Client {
 									newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
 
 									out = new ObjectOutputStream(newVizinho.getOutputStream());
+									out.flush();
 
 									out.writeObject(-1);
 
@@ -670,6 +679,7 @@ public class Client {
 							//System.out.println("recebido " + i);
 							for(Socket s : viewers) {
 								ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+								out.flush();
 								out.writeObject(recebido);
 							}
 							break;
@@ -731,7 +741,7 @@ public class Client {
 					ObjectOutputStream out = null;
 					try {
 						out = new ObjectOutputStream(viewer.getOutputStream());
-						out.reset();
+						out.flush();
 						int val = (int)c;
 						System.out.println("enviado: " + val);
 						out.writeObject("Stream,"+c+"," + this.streamId);
