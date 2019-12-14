@@ -125,7 +125,9 @@ public class Client {
 
 	private static void verStream(int escolhaVis) throws InterruptedException {
 		do{
+			if(!buffer.isEmpty()) {
 			System.out.println("Recebi " + buffer.remove());
+			}
 			Thread.sleep(TIME_BETWEEN_FRAMES);
 		}while (tabela.containsKey(escolhaVis) || !buffer.isEmpty());
 		
@@ -258,7 +260,7 @@ public class Client {
 		int result = -1;
 		int portS;
 		
-		System.out.println("Size: " + clients.size());
+		//System.out.println("Size: " + clients.size());
 
 		synchronized (clients) {
 
