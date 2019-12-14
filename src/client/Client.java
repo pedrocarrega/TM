@@ -364,6 +364,7 @@ public class Client {
 					//System.out.println("ligou");
 
 					ObjectInputStream inStream = new ObjectInputStream(socketAceite.getInputStream());
+					inStream.reset();
 
 
 					//String[] info = ((String)inStream.readObject()).split(",");
@@ -530,6 +531,7 @@ public class Client {
 						}
 
 						in = new ObjectInputStream(socket.getInputStream());
+						in.reset();
 
 						String recebido = (String) in.readObject();
 						String[] info = new String[1];
