@@ -125,7 +125,7 @@ public class Client {
 
 	private static void verStream(int escolhaVis) throws InterruptedException {
 		do{
-			System.out.println("Recebi" + buffer.remove());
+			System.out.println("Recebi " + buffer.remove());
 			Thread.sleep(TIME_BETWEEN_FRAMES);
 		}while (tabela.containsKey(escolhaVis) || !buffer.isEmpty());
 		
@@ -293,7 +293,7 @@ public class Client {
 		ObjectInputStream in = new ObjectInputStream(newSocket.getInputStream()); 
 		//fica preso AQUI caso tenhamos 1+ clientes
 
-		System.out.println("resposta " );
+		//System.out.println("resposta " );
 		int response = (int)in.readObject();
 
 
@@ -578,7 +578,7 @@ public class Client {
 							if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
 
 								int ttl = Integer.parseInt(info[1]) - 1;
-								System.out.println("TTL: "+ ttl);
+								//System.out.println("TTL: "+ ttl);
 								if(ttl > 0) {
 									//System.out.println("TTL GOOD");
 									Random r = new Random();
