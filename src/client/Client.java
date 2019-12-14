@@ -13,6 +13,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.time.LocalTime;
@@ -23,6 +24,7 @@ public class Client {
 	private static final int BUFFER_SIZE = 5;
 	private static final int TTL = 15;
 	private static List<Socket> viewers;
+	private static List<Socket> transmissores;
 	private static List<Socket> clients;
 	private static Map<Integer, List<String>> tabela;
 	private static final int MAX_CLIENT_SIZE = 30;
@@ -42,6 +44,7 @@ public class Client {
 
 		viewers = new ArrayList<Socket>();
 		tabela = new HashMap<>();
+		transmissores = new ArrayList<Socket>();
 
 		Listen listen = new Listen();
 		listen.start();
@@ -172,30 +175,46 @@ public class Client {
 	}
 
 
-	private static void visualizarStream(int idCanalVis) throws UnknownHostException, IOException {
+	private static void visualizarStream(int idCanalVis) {
 		// TODO Criar uma ligaï¿½ï¿½o ao ip que estah na lista tabela e pedir para ele nos transmitir a stream
 		List<String> streamers = tabela.get(idCanalVis);
 
-		Random r = new Random();
-		String streamerEscolhido = streamers.get(r.nextInt(streamers.size()));
-
-		int response = checkIfExists(streamerEscolhido);
-
-		Socket streamer;
-		if(response >= 0) {
-			streamer = clients.get(response);
+		if(streamers != null && streamers.size() > 0) {
+			Random r = new Random();
+			String streamerEscolhido = streamers.get(r.nextInt(streamers.size()));
+	
+			int response = checkIfExists(streamerEscolhido);
+	
+			Socket streamer = null;
+			if(response >= 0) {
+				streamer = clients.get(response);
+			}else {
+				try {
+					streamer = new Socket(streamerEscolhido, 12345);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			//System.out.println("Stream: " + streamer);
+			ObjectOutputStream out;
+			try {
+				out = new ObjectOutputStream(streamer.getOutputStream());
+				out.writeObject("Visualizar,");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+	
+			//avisar vizinhos que tb tranmitirei esta stream
+			informaVizinhos("Gossip," + idCanalVis + "," + localIp + "," + TTL);
+			
+			synchronized(streams) {
+				streams.add(idCanalVis);
+			}
 		}else {
-			streamer = new Socket(streamerEscolhido, 12345);
-		}
-		//System.out.println("Stream: " + streamer);
-		ObjectOutputStream out = new ObjectOutputStream(streamer.getOutputStream());
-		out.writeObject("Visualizar,");
-
-		//avisar vizinhos que tb tranmitirei esta stream
-		informaVizinhos("Gossip," + idCanalVis + "," + localIp + "," + TTL);
-		
-		synchronized(streams) {
-			streams.add(idCanalVis);
+			System.out.println("Não existem mais transmissores da stream, terá de aguardar até que seja encontrada um novo");
 		}
 	}
 
@@ -312,7 +331,9 @@ public class Client {
 		@Override
 		public void run() {
 
-			Socket socketAceite;
+			Socket socketAceite = null;
+			Socket socketRemoved = null;
+			int idStreamCrashed = 0;
 			while(true) {
 				try {
 					//System.out.println("antes de ligar: " + this.socket);
@@ -403,8 +424,11 @@ public class Client {
 						viewers.add(socketAceite);
 						break;
 					default:
-						socketAceite.close();
+						synchronized(clients) {
+							clients.add(socketAceite);
+						}
 						int i = info[1].charAt(0);
+						idStreamCrashed = i;
 						System.out.println("recebido " + i);
 						for(Socket s : viewers) {
 							ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
@@ -412,14 +436,36 @@ public class Client {
 						}							
 						break;
 					}
-				} catch (IOException | ClassNotFoundException e) {
+				} catch ( ClassNotFoundException e) {
+					e.printStackTrace();
+				} catch (SocketException e) {
+					System.out.println("entrou aqui simple server");
+					socketRemoved = socketAceite;
+					String[] addressToRemove = socketRemoved.getRemoteSocketAddress().toString().split(":");
+					removeStreamerTable(idStreamCrashed, addressToRemove[0]);
+					visualizarStream(idStreamCrashed);//em teoria vai buscar outro streamer
+					break;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-
 			}
+			clients.remove(socketRemoved);
+			viewers.remove(socketRemoved);
 		}
 
+		
 
+
+	}
+	
+	private static void removeStreamerTable(int idStreamCrashed, String userCrashed) {
+
+		List<String> streamers = tabela.get(idStreamCrashed);
+		
+		if(streamers != null) {
+			streamers.remove(userCrashed);
+		}
 	}
 
 	/*
@@ -439,6 +485,7 @@ public class Client {
 		public void run() {
 			//boolean run = true;
 			Socket socketRemoved = null;
+			int idStreamCrashed = 0;
 			while(true) {
 
 				System.out.print(""); //ISTO SO CORRE POR CAUSA DISTO!!!
@@ -571,6 +618,7 @@ public class Client {
 						default:
 							//Caso que recebe dados de uma transmissao
 							int i = info[1].charAt(0);
+							idStreamCrashed = i;
 							System.out.println("recebido " + i);
 							for(Socket s : viewers) {
 								ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
@@ -582,9 +630,16 @@ public class Client {
 						//in.close();
 					} catch (ClassNotFoundException e) {
 						e.printStackTrace();
-					} catch (IOException e) { //socket exception
+					} catch (SocketException e) { //socket exception
+						System.out.println("entrou aqui listen");
 						socketRemoved = socket;
+						String[] addressToRemove = socketRemoved.getRemoteSocketAddress().toString().split(":");
+						removeStreamerTable(idStreamCrashed, addressToRemove[0]);
+						visualizarStream(idStreamCrashed);//em teoria vai buscar outro streamer
 						break;
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
 
 				}
