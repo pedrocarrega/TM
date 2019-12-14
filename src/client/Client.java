@@ -61,7 +61,7 @@ public class Client {
 			SimpleServer server = new SimpleServer(12345);
 			server.start();
 		}
-		
+
 		streams = new ArrayList<>();
 		SporadicGossip gossipTemporal = new SporadicGossip();//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
 		gossipTemporal.start();
@@ -108,6 +108,13 @@ public class Client {
 				System.out.println("Transmitir");
 			}
 		}
+
+		synchronized (clients) {
+			for(Socket s : clients) {
+				s.close();
+			}
+		}		
+
 		sc.close();
 	}
 
@@ -123,16 +130,18 @@ public class Client {
 		for(int i = 0; i < arrSize; i++) {
 			arrayEnviado[i] = (char)i;
 		}
+
 		Transmit canal = new Transmit(arrayEnviado, idCanalTrans);
 		canal.start();
+
 		synchronized(streams) {
 			streams.add(idCanalTrans);
 		}
-		
+
 		canal.join();
-		
+
 		informaVizinhos("End," + idCanalTrans + "," + TTL);
-		
+
 		synchronized(streams) {
 			streams.remove((Integer)idCanalTrans);
 		}
@@ -144,17 +153,17 @@ public class Client {
 		// Fazer Gossip
 		if(clients.size() > 0) {
 			int probGossip = probToGossip;
-	
+
 			if(clients.size() < THREASHOLD_VIZINHOS) {
 				probGossip = 100;
 			}
-	
+
 			List<Socket> gossip = new ArrayList<>();
-	
+
 			int size = (clients.size()*probGossip)/100;
-	
+
 			Random r = new Random();
-	
+
 			for(int i = 0; i < size; i++) {
 				Socket temp = clients.get(r.nextInt(clients.size()));
 				if(!gossip.contains(temp)) {
@@ -173,15 +182,14 @@ public class Client {
 
 
 	private static void visualizarStream(int idCanalVis) {
-		// TODO Criar uma liga��o ao ip que estah na lista tabela e pedir para ele nos transmitir a stream
 		List<String> streamers = tabela.get(idCanalVis);
 
 		if(streamers != null && streamers.size() > 0) {
 			Random r = new Random();
 			String streamerEscolhido = streamers.get(r.nextInt(streamers.size()));
-	
+
 			int response = checkIfExists(streamerEscolhido);
-	
+
 			Socket streamer = null;
 			if(response >= 0) {
 				streamer = clients.get(response);
@@ -189,7 +197,6 @@ public class Client {
 				try {
 					streamer = new Socket(streamerEscolhido, 12345);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -199,14 +206,13 @@ public class Client {
 				out = new ObjectOutputStream(streamer.getOutputStream());
 				out.writeObject("Visualizar,");
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
-	
+
+
 			//avisar vizinhos que tb tranmitirei esta stream
 			informaVizinhos("Gossip," + idCanalVis + "," + localIp + "," + TTL);
-			
+
 			synchronized(streams) {
 				streams.add(idCanalVis);
 			}
@@ -273,7 +279,7 @@ public class Client {
 
 		System.out.println("resposta " );
 		int response = (int)in.readObject();
-		
+
 
 		if(response == 1) {
 
@@ -443,7 +449,6 @@ public class Client {
 					visualizarStream(idStreamCrashed);//em teoria vai buscar outro streamer
 					break;
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -451,15 +456,15 @@ public class Client {
 			viewers.remove(socketRemoved);
 		}
 
-		
+
 
 
 	}
-	
+
 	private static void removeStreamerTable(int idStreamCrashed, String userCrashed) {
 
 		List<String> streamers = tabela.get(idStreamCrashed);
-		
+
 		if(streamers != null) {
 			streamers.remove(userCrashed);
 		}
@@ -494,7 +499,7 @@ public class Client {
 						if(in != null) {
 							in.reset();
 						}
-						
+
 						in = new ObjectInputStream(socket.getInputStream());
 
 						String recebido = (String) in.readObject();
@@ -539,14 +544,14 @@ public class Client {
 							if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
 								int ttl = Integer.parseInt(info[1]) - 1;
 								if(ttl > 0) {
-									System.out.println("TTL GOOD");
+									//System.out.println("TTL GOOD");
 									Random r = new Random();
 									Socket reencaminhar = clients.get(r.nextInt(clients.size()));
 									//System.out.println("porta de resposta port=" + socket.getRemoteSocketAddress());
 									ObjectOutputStream out = new ObjectOutputStream(reencaminhar.getOutputStream());
 									out.writeObject("RandomWalk," + ttl + "," + info[2]);
 								}else {
-									System.out.println("TTL BAD");
+									//System.out.println("TTL BAD");
 									Socket newVizinho;
 									ObjectOutputStream out;
 									/*if(result >= 0) {
@@ -564,13 +569,13 @@ public class Client {
 										out.close();
 									}*/
 									newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
-									
+
 									out = new ObjectOutputStream(newVizinho.getOutputStream());
 
 									out.writeObject(-1);
 									out.flush();
-									System.out.println("test: " + (Integer.parseInt(address[1])+2));
-									
+									//System.out.println("test: " + (Integer.parseInt(address[1])+2));
+
 									newVizinho.close();
 									out.close();
 								}
@@ -601,7 +606,7 @@ public class Client {
 							//System.out.println("Este adicionou me :" + socket);
 							viewers.add(socket);
 							break;
-							
+
 						case "End":
 							tabela.remove(Integer.parseInt(info[1]));
 							System.out.println("Acabou a transmissao " + info[1]);
@@ -635,7 +640,6 @@ public class Client {
 						visualizarStream(idStreamCrashed);//em teoria vai buscar outro streamer
 						break;
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 
@@ -663,7 +667,7 @@ public class Client {
 			//			arrToTransmit[0]++;
 			Socket socketRemoved = null;
 			//int counter = 0;
-			
+
 			for(char c : arrToTransmit) {
 				//System.out.println("entre os for's " + viewers.size());
 				for(Socket viewer : viewers) {
@@ -675,8 +679,8 @@ public class Client {
 						out.writeObject("Stream,"+c+"," + this.streamId);
 						//out.writeObject(val+""); //precisas de enviar 1000 bytes
 					} catch (IOException e) {
-								socketRemoved = viewer;
-								break;
+						socketRemoved = viewer;
+						break;
 					}
 				}
 				viewers.remove(socketRemoved);
@@ -695,15 +699,15 @@ public class Client {
 			System.out.println("Acabou de transmitir");
 		}
 	}
-	
+
 	private static class SporadicGossip extends Thread implements Runnable{
 
 		public SporadicGossip(){
 		}
-		
+
 		@Override
 		public void run() {
-			
+
 			while(true) {
 				for(int idStream : streams) {
 					informaVizinhos("Gossip," + idStream + "," + localIp + "," + TTL);
@@ -715,6 +719,6 @@ public class Client {
 				}//faz gossip a cada 5s
 			}
 		}
-		
+
 	}
 }
