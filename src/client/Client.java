@@ -661,7 +661,7 @@ public class Client {
 					} catch (ClassNotFoundException e) {
 						e.printStackTrace();
 					} catch (SocketException e) { //socket exception
-						e.printStackTrace();
+						//e.printStackTrace();
 						System.out.println("entrou aqui listen");
 						socketRemoved = socket;
 						toRemove.add(socketRemoved);
