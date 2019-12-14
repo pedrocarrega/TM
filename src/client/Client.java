@@ -29,6 +29,8 @@ public class Client {
 	private static final int THREASHOLD_VIZINHOS = 5;
 	private static String localIp;
 	private final static int probToGossip = 70;
+	private static List<Integer> streams;
+	private static int TIME_TO_GOSSIP = 5000;//5s por cada gossip
 
 	public static void main(String[] args) throws NumberFormatException, UnknownHostException, ClassNotFoundException, IOException, InterruptedException {
 
@@ -59,17 +61,19 @@ public class Client {
 			SimpleServer server = new SimpleServer(12345);
 			server.start();
 		}
-
-
+		
+		streams = new ArrayList<>();
+		SporadicGossip gossipTemporal = new SporadicGossip();//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
+		gossipTemporal.start();
 
 		String comando;
+		boolean avaliador = true;
 		System.out.println("Insira o comando que deseja:");
 		while(!(comando = sc.nextLine()).equals("exit")) {
 			switch(comando.toLowerCase()) {
 			case "visualizar":
-				imprimeStreams();
-				boolean verifierVisualiza = true;
-				while(verifierVisualiza) {
+				boolean verifierVisualiza = imprimeStreams();
+				while(verifierVisualiza && avaliador) {
 					String escolhaVis = sc.nextLine();
 					if(tabela.containsKey(Integer.parseInt(escolhaVis))){
 						visualizarStream(Integer.parseInt(escolhaVis));
@@ -78,7 +82,7 @@ public class Client {
 					}else {
 						if(tabela.size() == 0) {
 							System.out.println("De momento nao existem streams disponiveis");
-							break;
+							avaliador = false;
 						}else {
 							System.out.println("Insira um canal valido");
 						}
@@ -114,16 +118,24 @@ public class Client {
 			informaVizinhos("Gossip," + idCanalTrans + "," + localIp + "," + TTL);
 		}
 
-		char[] arrayEnviado = new char[1000];
-		for(int i = 0; i < 250; i++) {
+		int arrSize = 1000;
+		char[] arrayEnviado = new char[arrSize];
+		for(int i = 0; i < arrSize; i++) {
 			arrayEnviado[i] = (char)i;
 		}
 		Transmit canal = new Transmit(arrayEnviado, idCanalTrans);
 		canal.start();
+		synchronized(streams) {
+			streams.add(idCanalTrans);
+		}
 		
 		canal.join();
 		
 		informaVizinhos("End," + idCanalTrans + "," + TTL);
+		
+		synchronized(streams) {
+			streams.remove((Integer)idCanalTrans);
+		}
 
 	}
 
@@ -181,18 +193,24 @@ public class Client {
 
 		//avisar vizinhos que tb tranmitirei esta stream
 		informaVizinhos("Gossip," + idCanalVis + "," + localIp + "," + TTL);
+		
+		synchronized(streams) {
+			streams.add(idCanalVis);
+		}
 	}
 
 
-	private static void imprimeStreams() {
+	private static boolean imprimeStreams() {
 
 		if(tabela.size() > 0) {
 			System.out.println("Escolha um dos seguintes canais");
 			for(Integer i : tabela.keySet()) {
 				System.out.println(i);
 			}
+			return true;
 		}else {
 			System.out.println("Nao existem canais disponiveis para visualizar");
+			return false;
 		}
 
 	}
@@ -237,7 +255,7 @@ public class Client {
 		ObjectInputStream in = new ObjectInputStream(newSocket.getInputStream()); 
 		//fica preso AQUI caso tenhamos 1+ clientes
 
-System.out.println("resposta " );
+		System.out.println("resposta " );
 		int response = (int)in.readObject();
 		
 
@@ -541,10 +559,13 @@ System.out.println("resposta " );
 							break;
 							
 						case "End":
-							System.out.println(tabela.remove(Integer.parseInt(info[1])));
+							tabela.remove(Integer.parseInt(info[1]));
 							System.out.println("Acabou a transmissao " + info[1]);
 							if((Integer.parseInt(info[2])-1) >= 0) {
 								informaVizinhos(info[0]+ "," + info[1]+ "," + (Integer.parseInt(info[2])-1));
+							}
+							synchronized(streams) {
+								streams.remove((Integer)Integer.parseInt(info[1]));//id do canal a remover
 							}
 							break;
 						default:
@@ -589,7 +610,7 @@ System.out.println("resposta " );
 
 			//			arrToTransmit[0]++;
 			Socket socketRemoved = null;
-			int counter = 0;
+			//int counter = 0;
 			
 			for(char c : arrToTransmit) {
 				//System.out.println("entre os for's " + viewers.size());
@@ -599,7 +620,7 @@ System.out.println("resposta " );
 						out = new ObjectOutputStream(viewer.getOutputStream());
 						int val = (int)c;
 						System.out.println("enviado: " + val);
-						out.writeObject("Stream,"+c);
+						out.writeObject("Stream,"+c+"," + this.streamId);
 						//out.writeObject(val+""); //precisas de enviar 1000 bytes
 					} catch (IOException e) {
 								socketRemoved = viewer;
@@ -613,13 +634,35 @@ System.out.println("resposta " );
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				counter++;
+				/*counter++;
 				if(counter % 50 == 0) {
 					informaVizinhos("Gossip," + streamId + "," + localIp + "," + TTL);
 					counter = 0;
-				}
+				}*/
 			}
 			System.out.println("Acabou de transmitir");
 		}
+	}
+	
+	private static class SporadicGossip extends Thread implements Runnable{
+
+		public SporadicGossip(){
+		}
+		
+		@Override
+		public void run() {
+			
+			while(true) {
+				for(int idStream : streams) {
+					informaVizinhos("Gossip," + idStream + "," + localIp + "," + TTL);
+				}
+				try {
+					Thread.sleep(TIME_TO_GOSSIP);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}//faz gossip a cada 5s
+			}
+		}
+		
 	}
 }
