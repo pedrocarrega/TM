@@ -551,12 +551,14 @@ public class Client {
 				System.out.print(""); //ISTO SO CORRE POR CAUSA DISTO!!!
 
 				for(Node node : clients) {
-					ObjectInputStream in = null;
+					ObjectInputStream in;
 					try {
 						//System.out.println("before in");
 
 						in = node.getInputStream();
 
+						if(in.available() > 0) {
+						
 						String recebido = (String) in.readObject();
 						String[] info = new String[1];
 
@@ -699,7 +701,7 @@ public class Client {
 							}
 							break;
 						}
-
+						}
 						//in.close();
 					} catch (ClassNotFoundException e) {
 						e.printStackTrace();
