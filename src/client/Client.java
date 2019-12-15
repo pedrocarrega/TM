@@ -131,7 +131,7 @@ public class Client {
 			informaVizinhos("Gossip," + idCanalTrans + "," + localIp + "," + TTL);
 		}
 
-		int arrSize = 1000;
+		int arrSize = 10;
 		char[] arrayEnviado = new char[arrSize];
 		for(int i = 0; i < arrSize; i++) {
 			arrayEnviado[i] = (char)i;
@@ -547,7 +547,7 @@ public class Client {
 				try {
 
 					String recebido = (String) in.readObject();
-					System.out.println("we got: " + recebido);
+					//System.out.println("we got: " + recebido);
 					String[] info = new String[1];
 
 					if(recebido.contains(",")) {
@@ -593,7 +593,7 @@ public class Client {
 								//System.out.println("TTL GOOD");
 								Random r = new Random();
 								Node reencaminhar = clients.get(r.nextInt(clients.size()));
-								//System.out.println("porta de resposta port=" + socket.getRemoteSocketAddress());
+								System.out.println("porta de resposta port=" + info[2]);
 								reencaminhar.RandomWalk("RandomWalk," + ttl + "," + info[2]);
 								//System.out.println("mandei");
 							}else {
