@@ -521,6 +521,7 @@ public class Client {
 			this.node = n;
 			this.in = node.getInputStream();
 			idStreamRemoved = -1;
+			this.in.mark(Integer.MAX_VALUE);
 		}
 
 
@@ -681,7 +682,11 @@ public class Client {
 
 				break;
 			} catch (IOException e) {
-				e.printStackTrace();
+				//e.printStackTrace();
+				try {
+					in.reset();
+				} catch (IOException e1) {
+				}
 			}
 
 		}		
