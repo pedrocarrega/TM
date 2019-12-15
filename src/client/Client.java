@@ -51,15 +51,7 @@ public class Client {
 		if(args.length > 0) {
 			String initialIp = args[0];
 			String initialPort = args[1];
-/*
-			IntStream.range(0, MAX_CLIENT_SIZE).forEach((int i) -> {
-				try {
-					//System.out.println("random: " + i);
-					randomWalk(initialIp, initialPort);
-				} catch (NumberFormatException | ClassNotFoundException | IOException e) {
-					e.printStackTrace();
-				}
-			});*/
+			
 			for(int i = 0; i < MAX_CLIENT_SIZE/2; i++){
 				try {
 					System.out.println("random: " + i);
