@@ -25,7 +25,7 @@ public class Client {
 	private static List<Node> clients = new ArrayList<>();;
 	private static Map<Integer, List<String>> tabela = new HashMap<>();
 	private static final int MAX_CLIENT_SIZE = 30;
-	private static final int THREASHOLD_VIZINHOS = 5;
+	private static final int THREASHOLD_VIZINHOS = 2;
 	private static String localIp;
 	private final static int probToGossip = 70;
 	private static final long DELAY_TIME = 2000;
