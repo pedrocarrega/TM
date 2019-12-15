@@ -247,8 +247,6 @@ public class Client {
 		int result = -1;
 		int portS;
 
-		//System.out.println("Size: " + clients.size());
-
 		try {
 			synchronized (clients) {
 
@@ -750,6 +748,10 @@ private static class SporadicGossip extends Thread implements Runnable{
 
 	@Override
 	public void run() {
+		
+		try {
+			Thread.sleep(10000);
+		
 
 		Random r = new Random();
 
@@ -768,11 +770,12 @@ private static class SporadicGossip extends Thread implements Runnable{
 			for(int idStream : streams) {
 				informaVizinhos("Gossip," + idStream + "," + localIp + "," + TTL);
 			}
-			try {
-				Thread.sleep(TIME_TO_GOSSIP);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}//faz gossip a cada 5s
+			
+				Thread.sleep(TIME_TO_GOSSIP); //faz gossip a cada 15s
+		}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
