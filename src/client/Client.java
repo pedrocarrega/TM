@@ -17,7 +17,7 @@ import java.net.UnknownHostException;
 
 public class Client {
 
-	private static final long TIME_BETWEEN_FRAMES = 150;
+	private static final long TIME_BETWEEN_FRAMES = 50;
 	private static final int TTL = 5;
 	private static List<Node> viewers;
 	private static List<Node> toAdd = new ArrayList<>();
@@ -28,6 +28,7 @@ public class Client {
 	private static final int THREASHOLD_VIZINHOS = 5;
 	private static String localIp;
 	private final static int probToGossip = 70;
+	private static final long DELAY_TIME = 2000;
 	private static List<Integer> streams;
 	private static int TIME_TO_GOSSIP = 15000;//5s por cada gossip
 	private static LinkedBlockingQueue<Integer> buffer = new LinkedBlockingQueue<>() ;
@@ -79,6 +80,7 @@ public class Client {
 						visualizarStream(Integer.parseInt(escolhaVis));
 						verifierVisualiza = false;
 						System.out.println("Esta a assistir ao canal " + escolhaVis);
+						Thread.sleep(DELAY_TIME);
 						verStream(Integer.parseInt(escolhaVis));
 					}else {
 						if(tabela.size() == 0) {
@@ -131,7 +133,7 @@ public class Client {
 			informaVizinhos("Gossip," + idCanalTrans + "," + localIp + "," + TTL);
 		}
 
-		int arrSize = 10;
+		int arrSize = 500;
 		char[] arrayEnviado = new char[arrSize];
 		for(int i = 0; i < arrSize; i++) {
 			arrayEnviado[i] = (char)i;
@@ -419,7 +421,7 @@ public class Client {
 										
 										//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
 										
-										newNode.Accepted();
+										newNode.accepted();
 										
 										//System.out.println("Close: " + newVizinho.isClosed());
 									}else {
@@ -576,6 +578,7 @@ public class Client {
 										Node node = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
 										clients.add(node);
 										new Listen(node);
+										node.accepted();
 									}else {
 										result = 0;
 									}
@@ -594,7 +597,7 @@ public class Client {
 									reencaminhar = clients.get(r.nextInt(clients.size()));
 								}while(reencaminhar.getSocket().getInetAddress().getHostAddress().equals(address[0]));
 								System.out.println("porta de resposta port=" + info[2]);
-								reencaminhar.RandomWalk("RandomWalk," + ttl + "," + info[2]);
+								reencaminhar.randomWalk("RandomWalk," + ttl + "," + info[2]);
 								//System.out.println("mandei");
 							}else {
 								//System.out.println("TTL BAD");

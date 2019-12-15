@@ -30,11 +30,11 @@ public class Node {
 		
 	}
 	
-	public void RandomWalk(String msg) throws IOException {
+	public void randomWalk(String msg) throws IOException {
 		out.writeObject(msg);
 	}
 	
-	public void Accepted() throws IOException {
+	public void accepted() throws IOException {
 		out.writeObject(1);
 	}
 	
