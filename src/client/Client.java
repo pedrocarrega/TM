@@ -50,7 +50,7 @@ public class Client {
 		if(args.length > 0) {
 			String initialIp = args[0];
 			String initialPort = args[1];
-
+/*
 			IntStream.range(0, MAX_CLIENT_SIZE).forEach((int i) -> {
 				try {
 					//System.out.println("random: " + i);
@@ -58,7 +58,15 @@ public class Client {
 				} catch (NumberFormatException | ClassNotFoundException | IOException e) {
 					e.printStackTrace();
 				}
-			});
+			});*/
+			for(int i = 0; i < MAX_CLIENT_SIZE; i++){
+				try {
+					System.out.println("random: " + i);
+					randomWalk(initialIp, initialPort);
+				} catch (NumberFormatException e) {
+					e.printStackTrace();
+				}
+			}
 		}//else {
 			SimpleServer server = new SimpleServer(12345);
 			server.start();
@@ -254,7 +262,7 @@ public class Client {
 	}
 
 
-	private static void randomWalk(String ip, String port) throws NumberFormatException, UnknownHostException, IOException, ClassNotFoundException {
+	private static void randomWalk(String ip, String port){
 
 		Node node;
 		Socket socket;
@@ -263,13 +271,17 @@ public class Client {
 		
 		//System.out.println("Size: " + clients.size());
 
-		synchronized (clients) {
+		try {
+			synchronized (clients) {
+		
 
 			result = checkIfExists(ip);
 
 		}
 		if(result < 0) {
-			node = new Node(new Socket(ip, Integer.parseInt(port)));
+			
+				node = new Node(new Socket(ip, Integer.parseInt(port)));
+			
 			socket = node.getSocket();
 			portS = socket.getLocalPort()+2;
 			localIp = socket.getLocalAddress().toString().substring(1);
@@ -317,8 +329,16 @@ public class Client {
 			newNode.close();
 
 		}
-
 		server.close();
+		} catch (NumberFormatException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		
 
 	}
 
@@ -785,7 +805,7 @@ public class Client {
 						String[] info = n.getSocket().getRemoteSocketAddress().toString().substring(1).split(":");
 						try {
 							randomWalk(info[0], info[1]);
-						} catch (NumberFormatException | ClassNotFoundException | IOException e) {
+						} catch (NumberFormatException e) {
 							e.printStackTrace();
 						}
 					}
