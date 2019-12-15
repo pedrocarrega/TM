@@ -24,8 +24,8 @@ public class Client {
 	private static List<Node> toRemove = new ArrayList<>();
 	private static List<Node> clients = new ArrayList<>();
 	private static Map<Integer, List<String>> tabela = new HashMap<>();
-	private static final int MAX_CLIENT_SIZE = 30;
-	private static final int THREASHOLD_VIZINHOS = 2;
+	private static final int MAX_CLIENT_SIZE = 2;
+	private static final int THREASHOLD_VIZINHOS = 5;
 	private static String localIp;
 	private final static int probToGossip = 70;
 	private static final long DELAY_TIME = 2000;
@@ -42,7 +42,7 @@ public class Client {
 			String initialIp = args[0];
 			String initialPort = args[1];
 
-			for(int i = 0; i < MAX_CLIENT_SIZE/2; i++){
+			for(int i = 0; i < MAX_CLIENT_SIZE; i++){
 				try {
 					//System.out.println("random: " + i);
 					randomWalk(initialIp, initialPort);
@@ -754,8 +754,8 @@ private static class SporadicGossip extends Thread implements Runnable{
 		Random r = new Random();
 
 		while(true) {
-			if(clients.size() > 0 && clients.size() < MAX_CLIENT_SIZE - 15) {
-				for (int i = 0; i < 15; i++) {
+			if(clients.size() > 0 && clients.size() < MAX_CLIENT_SIZE) {
+				for (int i = 0; i < MAX_CLIENT_SIZE-clients.size(); i++) {
 					Node n = clients.get(r.nextInt(clients.size()));
 					String[] info = n.getSocket().getRemoteSocketAddress().toString().substring(1).split(":");
 					try {
