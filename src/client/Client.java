@@ -191,7 +191,7 @@ public class Client {
 					gossip.add(temp);
 					try {
 						ObjectOutputStream out = temp.getOutputStream();
-						out.flush();
+						//out.flush();
 						out.writeObject(string);
 					} catch (IOException e) {
 						toRemove.add(temp);
@@ -227,7 +227,7 @@ public class Client {
 			ObjectOutputStream out;
 			try {
 				out = streamer.getOutputStream();
-				out.flush();
+				//out.flush();
 				out.writeObject("Visualizar,");
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -293,7 +293,7 @@ public class Client {
 		}
 
 		ObjectOutputStream outStream = node.getOutputStream();
-		outStream.flush();
+		//outStream.flush();
 
 		//System.out.println(socket.getLocalSocketAddress().toString().substring(1));
 
@@ -414,6 +414,7 @@ public class Client {
 
 						if(clients.size() < MAX_CLIENT_SIZE) {
 
+							System.out.println("size: " + clients.size());
 							//System.out.println(address[0] + " " + Integer.parseInt(address[1]));
 
 
@@ -422,12 +423,14 @@ public class Client {
 								if(result < 0) {
 
 									if(!address[0].equals(localIp)) {
+										System.out.println("adicionar");
 										Node newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
+										System.out.println(newVizinho.getSocket().getRemoteSocketAddress().toString());
 										toAdd.add(newVizinho);
 
 										//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
 										ObjectOutputStream outStream = newVizinho.getOutputStream();
-										outStream.flush();
+										//outStream.flush();
 										outStream.writeObject(1);
 										//System.out.println("Close: " + newVizinho.isClosed());
 									}else {
@@ -444,7 +447,7 @@ public class Client {
 								Node reencaminhar = clients.get(r.nextInt(clients.size()));
 								//System.out.println("vou mandar");
 								ObjectOutputStream out = reencaminhar.getOutputStream();
-								out.flush();
+								//out.flush();
 								out.writeObject("RandomWalk," + ttl + "," + info[2]);
 							}else {
 								//System.out.println("Fuck ttl");
@@ -466,7 +469,7 @@ public class Client {
 								}*/
 								newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
 								out = newVizinho.getOutputStream();
-								out.flush();
+								//out.flush();
 
 								out.writeObject(-1);
 
@@ -487,7 +490,7 @@ public class Client {
 						//System.out.println("recebido " + i);
 						for(Node n : viewers) {
 							ObjectOutputStream out = n.getOutputStream();
-							out.flush();
+							//out.flush();
 							out.writeObject(info[1]);
 						}							
 						break;
@@ -592,7 +595,7 @@ public class Client {
 											Node newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));										
 											toAdd.add(newVizinho);
 											ObjectOutputStream outStream = newVizinho.getOutputStream();
-											outStream.flush();
+											//outStream.flush();
 											outStream.writeObject(1);
 										}else {
 											result = 0;
@@ -617,7 +620,7 @@ public class Client {
 									Node reencaminhar = clients.get(r.nextInt(clients.size()));
 									//System.out.println("porta de resposta port=" + socket.getRemoteSocketAddress());
 									ObjectOutputStream out = reencaminhar.getOutputStream();
-									out.flush();
+									//out.flush();
 									out.writeObject("RandomWalk," + ttl + "," + info[2]);
 									//System.out.println("mandei");
 								}else {
@@ -643,7 +646,7 @@ public class Client {
 									newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
 
 									out = newVizinho.getOutputStream();
-									out.flush();
+									//out.flush();
 
 									out.writeObject(-1);
 
@@ -699,7 +702,7 @@ public class Client {
 							//System.out.println("recebido " + i);
 							for(Node n : viewers) {
 								ObjectOutputStream out = n.getOutputStream();
-								out.flush();
+								//out.flush();
 								out.writeObject(recebido);
 							}
 							break;
@@ -761,7 +764,7 @@ public class Client {
 					ObjectOutputStream out = null;
 					try {
 						out = viewer.getOutputStream();
-						out.flush();
+						//out.flush();
 						int val = (int)c;
 						System.out.println("enviado: " + val);
 						out.writeObject("Stream,"+c+"," + this.streamId);
