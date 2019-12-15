@@ -414,9 +414,19 @@ public class Client {
 								if(result < 0) {
 
 									if(!address[0].equals(localIp)) {
-										System.out.println("adicionar");
-										Node newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
-										System.out.println(newVizinho.getSocket().getRemoteSocketAddress().toString());
+										Node newVizinho = null;
+										try {
+											System.out.println("adicionar");
+										newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
+										} catch (Exception e) {
+											e.printStackTrace();
+											// TODO: handle exception
+										}
+										int port = (Integer.parseInt(address[1])+2);
+										System.out.println(address[0] + ":" + port);
+										//System.out.println(newVizinho.getSocket().getRemoteSocketAddress().toString());
+										
+										
 										toAdd.add(newVizinho);
 
 										//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
