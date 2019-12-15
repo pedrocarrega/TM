@@ -205,8 +205,10 @@ public class Client {
 			}
 			//System.out.println("Stream: " + streamer);
 			try {
+				System.out.println("pls help: " + streamer.getSocket());
 				ObjectOutputStream out = streamer.getOutputStream();
 				out.writeObject("Visualizar,");
+				out.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
