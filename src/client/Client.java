@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.IntStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -43,7 +42,7 @@ public class Client {
 
 
 
-		viewers = new ArrayList<Node>();
+		viewers = new ArrayList<>();
 		tabela = new HashMap<>();
 		new ArrayList<Socket>();
 
@@ -61,7 +60,7 @@ public class Client {
 					e.printStackTrace();
 				}
 			});*/
-			for(int i = 0; i < MAX_CLIENT_SIZE; i++){
+			for(int i = 0; i < MAX_CLIENT_SIZE/2; i++){
 				try {
 					System.out.println("random: " + i);
 					randomWalk(initialIp, initialPort);
@@ -387,10 +386,9 @@ public class Client {
 					nodeAceite = new Node(this.socket.accept());
 					localIp = nodeAceite.getSocket().getLocalAddress().toString().substring(1);
 
-					//System.out.println("ligou");
+					System.out.println("ligou");
 
 					ObjectInputStream inStream = nodeAceite.getInputStream();
-					//inStream.reset();
 
 
 					//String[] info = ((String)inStream.readObject()).split(",");
@@ -415,7 +413,7 @@ public class Client {
 
 						if(clients.size() < MAX_CLIENT_SIZE) {
 
-							System.out.println("size: " + clients.size());
+							//System.out.println("size: " + clients.size());
 							//System.out.println(address[0] + " " + Integer.parseInt(address[1]));
 
 
