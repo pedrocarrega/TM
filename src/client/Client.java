@@ -280,14 +280,14 @@ public class Client {
 		}else {
 			node = clients.get(result);
 			socket = node.getSocket();
-			//System.out.println(socket);
+			System.out.println(socket);
 			portS = socket.getLocalPort()+2;
 		}
 
 		ObjectOutputStream outStream = node.getOutputStream();
 		//outStream.flush();
 
-		//System.out.println(socket.getLocalSocketAddress().toString().substring(1));
+		System.out.println(socket.getLocalSocketAddress().toString().substring(1));
 
 		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
 
@@ -295,10 +295,10 @@ public class Client {
 			socket.close();
 			outStream.close();
 		}
-		//System.out.println(portS);
+		System.out.println(portS);
 		ServerSocket server = new ServerSocket(portS);
 		Node newNode = new Node(server.accept());
-		//System.out.println("server: " + newNode.getSocket().getLocalAddress());
+		System.out.println("server: " + newNode.getSocket().getLocalAddress());
 
 		ObjectInputStream in = newNode.getInputStream(); 
 		//fica preso AQUI caso tenhamos 1+ clientes
@@ -585,7 +585,7 @@ public class Client {
 								synchronized (clients) {
 
 									if(result < 0) {
-										//System.out.println("listen: " + address[1]);
+										System.out.println("listen: " + address[1]);
 										if(!address[0].equals(localIp)) {
 											Node newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));										
 											toAdd.add(newVizinho);
