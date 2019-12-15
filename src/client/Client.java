@@ -138,7 +138,7 @@ public class Client {
 			informaVizinhos("Gossip," + idCanalTrans + "," + localIp + "," + TTL);
 		}
 
-		int arrSize = 1000;
+		int arrSize = 10;
 		char[] arrayEnviado = new char[arrSize];
 		for(int i = 0; i < arrSize; i++) {
 			arrayEnviado[i] = (char)i;
