@@ -556,8 +556,10 @@ public class Client {
 						//System.out.println("before in");
 
 						in = node.getInputStream();
+						
+						String recebido;
 
-						String recebido = (String) in.readObject();
+						if(!(recebido = (String) in.readObject()).equals("")) {
 						String[] info = new String[1];
 
 
@@ -571,13 +573,14 @@ public class Client {
 
 						switch (info[0]) {
 						case "RandomWalk":
+							System.out.println("random time");
 
 							int result = -1;
 							String[] address = info[2].split(":");
 							if(clients.size() < MAX_CLIENT_SIZE) {
 
 								System.out.println("size: " + clients.size());
-								//System.out.println(address[0] + " " + Integer.parseInt(address[1]));
+								System.out.println(address[0] + " " + Integer.parseInt(address[1]));
 
 								result = checkIfExists(address[0]);
 
@@ -608,7 +611,7 @@ public class Client {
 							if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
 
 								int ttl = Integer.parseInt(info[1]) - 1;
-								//System.out.println("TTL: "+ ttl);
+								System.out.println("TTL: "+ ttl);
 								if(ttl > 0) {
 									//System.out.println("TTL GOOD");
 									Random r = new Random();
@@ -699,7 +702,7 @@ public class Client {
 							}
 							break;
 						}
-						
+						}
 						//in.close();
 					} catch (ClassNotFoundException e) {
 						e.printStackTrace();
