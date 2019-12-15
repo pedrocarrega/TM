@@ -538,11 +538,13 @@ public class Client {
 						}
 
 						in = node.getInputStream();
+						
 						//in.reset();
 
 						String recebido = (String) in.readObject();
 						String[] info = new String[1];
 
+						
 
 
 						if(recebido.contains(",")) {
@@ -551,6 +553,8 @@ public class Client {
 							int val = (int)recebido.charAt(0);
 							info[0] = val+"";
 						}
+						
+						System.out.println("TTL = " + info[1] + " ip = " + info[2]);
 
 						switch (info[0]) {
 						case "RandomWalk":
