@@ -697,6 +697,7 @@ public class Client {
 				try {
 					in.reset();
 				} catch (IOException e1) {
+					e1.printStackTrace();
 				}
 			}
 
