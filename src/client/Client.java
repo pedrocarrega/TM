@@ -19,17 +19,17 @@ public class Client {
 
 	private static final long TIME_BETWEEN_FRAMES = 50;
 	private static final int TTL = 5;
-	private static List<Node> viewers;
+	private static List<Node> viewers = new ArrayList<>();;
 	private static List<Node> toAdd = new ArrayList<>();
 	private static List<Node> toRemove = new ArrayList<>();
-	private static List<Node> clients;
-	private static Map<Integer, List<String>> tabela;
+	private static List<Node> clients = new ArrayList<>();;
+	private static Map<Integer, List<String>> tabela = new HashMap<>();
 	private static final int MAX_CLIENT_SIZE = 30;
 	private static final int THREASHOLD_VIZINHOS = 5;
 	private static String localIp;
 	private final static int probToGossip = 70;
 	private static final long DELAY_TIME = 2000;
-	private static List<Integer> streams;
+	private static List<Integer> streams = new ArrayList<>();;
 	private static int TIME_TO_GOSSIP = 15000;//5s por cada gossip
 	private static LinkedBlockingQueue<Integer> buffer = new LinkedBlockingQueue<>() ;
 
@@ -37,35 +37,26 @@ public class Client {
 
 		Scanner sc = new Scanner(System.in);
 		//System.out.println("1 - Watch Stream\n2 - Host Stream \nChoose your action: ");
-		clients = new ArrayList<>();
-		streams = new ArrayList<>();
-
-
-
-
-		viewers = new ArrayList<>();
-		tabela = new HashMap<>();
-		new ArrayList<Socket>();
-
+		
 		if(args.length > 0) {
 			String initialIp = args[0];
 			String initialPort = args[1];
 
 			for(int i = 0; i < MAX_CLIENT_SIZE/2; i++){
 				try {
-					System.out.println("random: " + i);
+					//System.out.println("random: " + i);
 					randomWalk(initialIp, initialPort);
 				} catch (NumberFormatException e) {
 					e.printStackTrace();
 				}
 			}
-		}//else {
+		}
 		SimpleServer server = new SimpleServer(12345);
 		server.start();
-		//}
+		
 
-		//SporadicGossip gossipTemporal = new SporadicGossip();//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
-		//gossipTemporal.start();
+		SporadicGossip gossipTemporal = new SporadicGossip();//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
+		gossipTemporal.start();
 
 		String comando;
 		boolean avaliador = true;
