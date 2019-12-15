@@ -408,7 +408,8 @@ public class Client {
 										portToSend = Integer.parseInt(address[1]);
 										portToSend += 2;
 										System.out.println(address[0] +  " port " + portToSend);
-										Node newVizinho = new Node(new Socket(address[0], portToSend));
+										Socket temp = new Socket(address[0], portToSend);
+										Node newVizinho = new Node(temp);
 										toAdd.add(newVizinho);
 
 										//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
@@ -425,10 +426,11 @@ public class Client {
 						}
 						if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
 							int ttl = Integer.parseInt(info[1]) - 1;
+							System.out.println("vou mandar ttl " + ttl);
 							if(ttl > 0) {
 								Random r = new Random();
 								Node reencaminhar = clients.get(r.nextInt(clients.size()));
-								//System.out.println("vou mandar");
+								//System.out.println("vou mandar ttl " + ttl);
 								ObjectOutputStream out = reencaminhar.getOutputStream();
 								out.flush();
 								out.writeObject("RandomWalk," + ttl + "," + info[2]);
