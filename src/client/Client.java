@@ -65,8 +65,8 @@ public class Client {
 		//}
 
 		streams = new ArrayList<>();
-		SporadicGossip gossipTemporal = new SporadicGossip();//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
-		gossipTemporal.start();
+		//SporadicGossip gossipTemporal = new SporadicGossip();//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
+		//gossipTemporal.start();
 
 		String comando;
 		boolean avaliador = true;
@@ -374,8 +374,11 @@ public class Client {
 
 					//String[] info = ((String)inStream.readObject()).split(",");
 					//System.out.println(info[2]);
+					System.out.println("antes Entrou no simple server");
 					String recebido = (String) inStream.readObject();
+					System.out.println("Entrou no simple server");
 					String[] info = new String[1];
+					int portToSend = 0;
 
 
 					if(recebido.contains(",")) {
@@ -402,7 +405,10 @@ public class Client {
 								if(result < 0) {
 
 									if(!address[0].equals(localIp)) {
-										Node newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
+										portToSend = Integer.parseInt(address[1]);
+										portToSend += 2;
+										System.out.println(address[0] +  " port " + portToSend);
+										Node newVizinho = new Node(new Socket(address[0], portToSend));
 										toAdd.add(newVizinho);
 
 										//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
@@ -441,7 +447,10 @@ public class Client {
 									newVizinho.close();
 									out.close();
 								}*/
-								newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
+								portToSend = Integer.parseInt(address[1]);
+								portToSend += 2;
+								newVizinho = new Node(new Socket(address[0], portToSend));
+								System.out.println(address[0] + " port2 " + portToSend);
 								out = newVizinho.getOutputStream();
 								out.flush();
 
@@ -472,6 +481,7 @@ public class Client {
 				} catch ( ClassNotFoundException e) {
 					e.printStackTrace();
 				} catch (SocketException e) {
+					e.printStackTrace();
 					//System.out.println("entrou aqui simple server");
 					nodeRemoved = nodeAceite;
 					String[] addressToRemove = nodeRemoved.getSocket().getRemoteSocketAddress().toString().split(":");
@@ -522,6 +532,7 @@ public class Client {
 			//boolean run = true;
 			Node nodeRemoved = null;
 			int idStreamCrashed = 0;
+			int portToSend = 0;
 			while(true) {
 
 				System.out.print(""); //ISTO SO CORRE POR CAUSA DISTO!!!
@@ -536,7 +547,10 @@ public class Client {
 
 						in = node.getInputStream();
 						//in.reset();
+						
 
+
+						
 						String recebido = (String) in.readObject();
 						String[] info = new String[1];
 
@@ -566,7 +580,9 @@ public class Client {
 									if(result < 0) {
 										//System.out.println("listen: " + address[1]);
 										if(!address[0].equals(localIp)) {
-											Node newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));										
+											portToSend = Integer.parseInt(address[1]);
+											portToSend += 2;
+											Node newVizinho = new Node(new Socket(address[0], portToSend));										
 											toAdd.add(newVizinho);
 											ObjectOutputStream outStream = newVizinho.getOutputStream();
 											outStream.flush();
@@ -614,14 +630,16 @@ public class Client {
 									}*/
 
 									//System.out.println("test: " + address[1] + "ttl: " + ttl);
-									newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
+									portToSend = Integer.parseInt(address[1]);
+									portToSend += 2;
+									newVizinho = new Node(new Socket(address[0], portToSend));
 
 									out = newVizinho.getOutputStream();
 									out.flush();
 
 									out.writeObject(-1);
 
-									//System.out.println("mandei2");
+									System.out.println("mandei2 " + newVizinho.getSocket().getRemoteSocketAddress().toString());
 
 									//System.out.println("test: " + (Integer.parseInt(address[1])+2));
 
@@ -678,12 +696,12 @@ public class Client {
 							}
 							break;
 						}
-
+						
 						//in.close();
 					} catch (ClassNotFoundException e) {
 						e.printStackTrace();
 					} catch (SocketException e) { //socket exception
-						//e.printStackTrace();
+						e.printStackTrace();
 						System.out.println("entrou aqui listen");
 						nodeRemoved = node;
 						toRemove.add(nodeRemoved);
