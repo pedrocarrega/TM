@@ -640,7 +640,10 @@ public class Client {
 						break;
 					case "Visualizar":
 						System.out.println("Este adicionou me :" + node.getSocket());
-						viewers.add(node);
+						synchronized (viewers) {
+							viewers.add(node);
+						}
+						System.out.println("viewers: " + viewers.size());
 						break;
 
 					case "End":
