@@ -316,10 +316,8 @@ public class Client {
 			}
 			server.close();
 		} catch (NumberFormatException | IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -538,7 +536,6 @@ public class Client {
 
 
 
-		@SuppressWarnings("unused")
 		@Override
 		public void run() {
 
@@ -589,10 +586,13 @@ public class Client {
 
 							int ttl = Integer.parseInt(info[1]) - 1;
 							System.out.println("TTL: "+ ttl);
-							if(ttl > 0) {
+							if(ttl > 0 && clients.size() > 1) {
 								//System.out.println("TTL GOOD");
 								Random r = new Random();
-								Node reencaminhar = clients.get(r.nextInt(clients.size()));
+								Node reencaminhar = null;
+								do {
+									reencaminhar = clients.get(r.nextInt(clients.size()));
+								}while(reencaminhar.getSocket().getInetAddress().getHostAddress().equals(address[0]));
 								System.out.println("porta de resposta port=" + info[2]);
 								reencaminhar.RandomWalk("RandomWalk," + ttl + "," + info[2]);
 								//System.out.println("mandei");
