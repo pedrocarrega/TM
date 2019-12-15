@@ -498,8 +498,11 @@ public class Client {
 					e.printStackTrace();
 				}
 			}
-			clients.remove(nodeRemoved);
-			viewers.remove(nodeRemoved);
+			try {
+				this.socket.close();
+			} catch (IOException e) {
+				//e.printStackTrace();
+			}
 		}
 
 
@@ -701,6 +704,7 @@ public class Client {
 							ObjectOutputStream out = n.getOutputStream();
 							out.writeObject(recebido);
 						}
+						startTime = LocalTime.now();
 						break;
 					}
 
