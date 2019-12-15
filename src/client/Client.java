@@ -547,7 +547,7 @@ public class Client {
 
 					switch (info[0]) {
 					case "RandomWalk":
-						System.out.println("random time");
+						//System.out.println("random time");
 
 						int result = -1;
 						String[] address = info[2].split(":");
@@ -640,7 +640,7 @@ public class Client {
 						//System.out.println(info[0]+ "," + info[1]+ "," + info[2] + "," + currentTTL);
 						break;
 					case "Visualizar":
-						//System.out.println("Este adicionou me :" + socket);
+						System.out.println("Este adicionou me :" + node.getSocket());
 						viewers.add(node);
 						break;
 
@@ -704,9 +704,11 @@ private static class Transmit extends Thread implements Runnable{
 	@Override
 	public void run() {
 
-		//			arrToTransmit[0]++;
+		//arrToTransmit[0]++;
 		Node nodeRemoved = null;
 		//int counter = 0;
+		
+		System.out.println("Viewers: " + viewers.size());
 
 		for(char c : arrToTransmit) {
 			//System.out.println("entre os for's " + viewers.size());
@@ -716,7 +718,7 @@ private static class Transmit extends Thread implements Runnable{
 					out = viewer.getOutputStream();
 					//out.flush();
 					int val = (int)c;
-					System.out.println("enviado: " + val);
+					//System.out.println("enviado: " + val);
 					out.writeObject("Stream,"+c+"," + this.streamId);
 					//out.writeObject(val+""); //precisas de enviar 1000 bytes
 				} catch (IOException e) {
