@@ -38,6 +38,8 @@ public class Client {
 		Scanner sc = new Scanner(System.in);
 		//System.out.println("1 - Watch Stream\n2 - Host Stream \nChoose your action: ");
 		clients = new ArrayList<>();
+		streams = new ArrayList<>();
+		
 
 
 
@@ -72,9 +74,8 @@ public class Client {
 			server.start();
 		//}
 
-		streams = new ArrayList<>();
-		SporadicGossip gossipTemporal = new SporadicGossip();//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
-		gossipTemporal.start();
+		//SporadicGossip gossipTemporal = new SporadicGossip();//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
+		//gossipTemporal.start();
 
 		String comando;
 		boolean avaliador = true;
@@ -556,12 +557,8 @@ public class Client {
 					ObjectInputStream in = null;
 					try {
 						//System.out.println("before in");
-						if(in != null) {
-							in.reset();
-						}
 
 						in = node.getInputStream();
-						//in.reset();
 
 						String recebido = (String) in.readObject();
 						String[] info = new String[1];
@@ -582,6 +579,7 @@ public class Client {
 							String[] address = info[2].split(":");
 							if(clients.size() < MAX_CLIENT_SIZE) {
 
+								System.out.println("size: " + clients.size());
 								//System.out.println(address[0] + " " + Integer.parseInt(address[1]));
 
 								result = checkIfExists(address[0]);
