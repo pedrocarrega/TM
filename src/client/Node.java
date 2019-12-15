@@ -31,11 +31,11 @@ public class Node {
 	}
 	
 	public void randomWalk(String msg) throws IOException {
-		out.writeObject(msg);
+		out.writeChars(msg);
 	}
 	
 	public void accepted() throws IOException {
-		out.writeObject(1);
+		out.writeInt(1);
 	}
 	
 	public Socket getSocket() {
