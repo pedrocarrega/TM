@@ -197,15 +197,15 @@ public class Client {
 			}else {
 				try {
 					streamer = new Node(new Socket(streamerEscolhido, 12345));
+					clients.add(streamer);
+					new Listen(streamer).start();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 			//System.out.println("Stream: " + streamer);
-			ObjectOutputStream out;
 			try {
-				out = streamer.getOutputStream();
-				//out.flush();
+				ObjectOutputStream out = streamer.getOutputStream();
 				out.writeObject("Visualizar,");
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -215,9 +215,6 @@ public class Client {
 			//avisar vizinhos que tb tranmitirei esta stream
 			informaVizinhos("Gossip," + idCanalVis + "," + localIp + "," + TTL);
 
-			synchronized(streams) {
-				streams.add(idCanalVis);
-			}
 		}else {
 			System.out.println("Nao existem mais transmissores da stream, tera de aguardar ate que seja encontrada um novo");
 		}
