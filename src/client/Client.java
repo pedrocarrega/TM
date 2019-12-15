@@ -24,7 +24,7 @@ public class Client {
 	private static List<Node> toRemove = new ArrayList<>();
 	private static List<Node> clients = new ArrayList<>();
 	private static Map<Integer, List<String>> tabela = new HashMap<>();
-	private static final int MAX_CLIENT_SIZE = 2;
+	private static final int MAX_CLIENT_SIZE = 3;
 	private static final int THREASHOLD_VIZINHOS = 5;
 	private static String localIp;
 	private final static int probToGossip = 70;
@@ -55,8 +55,8 @@ public class Client {
 		server.start();
 		
 
-		SporadicGossip gossipTemporal = new SporadicGossip();//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
-		gossipTemporal.start();
+		//SporadicGossip gossipTemporal = new SporadicGossip();//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
+		//gossipTemporal.start();
 
 		String comando;
 		boolean avaliador = true;
@@ -671,8 +671,8 @@ public class Client {
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			} catch (SocketException e) { //socket exception
-				//e.printStackTrace();
-				System.out.println("entrou aqui listen");
+				e.printStackTrace();
+				System.out.println("entrou aqui listen" + node.getSocket());
 				clients.remove(node);
 				String[] addressToRemove = node.getSocket().getRemoteSocketAddress().toString().split(":");
 
