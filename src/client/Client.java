@@ -19,19 +19,19 @@ public class Client {
 
 	private static final long TIME_BETWEEN_FRAMES = 50;
 	private static final int TTL = 5;
-	private static List<Node> viewers = new ArrayList<>();;
+	private static List<Node> viewers = new ArrayList<>();
 	private static List<Node> toAdd = new ArrayList<>();
 	private static List<Node> toRemove = new ArrayList<>();
-	private static List<Node> clients = new ArrayList<>();;
+	private static List<Node> clients = new ArrayList<>();
 	private static Map<Integer, List<String>> tabela = new HashMap<>();
 	private static final int MAX_CLIENT_SIZE = 30;
 	private static final int THREASHOLD_VIZINHOS = 2;
 	private static String localIp;
 	private final static int probToGossip = 70;
 	private static final long DELAY_TIME = 2000;
-	private static List<Integer> streams = new ArrayList<>();;
-	private static int TIME_TO_GOSSIP = 15000;//5s por cada gossip
-	private static LinkedBlockingQueue<Integer> buffer = new LinkedBlockingQueue<>() ;
+	private static List<Integer> streams = new ArrayList<>();
+	private static int TIME_TO_GOSSIP = 15000; //5s por cada gossip
+	private static LinkedBlockingQueue<Integer> buffer = new LinkedBlockingQueue<>();
 
 	public static void main(String[] args) throws NumberFormatException, UnknownHostException, ClassNotFoundException, IOException, InterruptedException {
 
