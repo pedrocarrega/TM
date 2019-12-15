@@ -38,7 +38,7 @@ public class Client {
 		//System.out.println("1 - Watch Stream\n2 - Host Stream \nChoose your action: ");
 		clients = new ArrayList<>();
 		streams = new ArrayList<>();
-		
+
 
 
 
@@ -46,12 +46,10 @@ public class Client {
 		tabela = new HashMap<>();
 		new ArrayList<Socket>();
 
-		Listen listen = new Listen();
-		listen.start();
 		if(args.length > 0) {
 			String initialIp = args[0];
 			String initialPort = args[1];
-			
+
 			for(int i = 0; i < MAX_CLIENT_SIZE/2; i++){
 				try {
 					System.out.println("random: " + i);
@@ -61,8 +59,8 @@ public class Client {
 				}
 			}
 		}//else {
-			SimpleServer server = new SimpleServer(12345);
-			server.start();
+		SimpleServer server = new SimpleServer(12345);
+		server.start();
 		//}
 
 		//SporadicGossip gossipTemporal = new SporadicGossip();//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
@@ -112,11 +110,6 @@ public class Client {
 			}
 		}
 
-		synchronized (clients) {
-			for(Node n : clients) {
-				n.close();
-			}
-		}
 		sc.close();
 	}
 
@@ -124,11 +117,11 @@ public class Client {
 	private static void verStream(int escolhaVis) throws InterruptedException {
 		do{
 			if(!buffer.isEmpty()) {
-			System.out.println("Recebi " + buffer.remove());
+				System.out.println("Recebi " + buffer.remove());
 			}
 			Thread.sleep(TIME_BETWEEN_FRAMES);
 		}while (tabela.containsKey(escolhaVis) || !buffer.isEmpty());
-		
+
 	}
 
 
@@ -138,7 +131,7 @@ public class Client {
 			informaVizinhos("Gossip," + idCanalTrans + "," + localIp + "," + TTL);
 		}
 
-		int arrSize = 10;
+		int arrSize = 1000;
 		char[] arrayEnviado = new char[arrSize];
 		for(int i = 0; i < arrSize; i++) {
 			arrayEnviado[i] = (char)i;
@@ -260,68 +253,68 @@ public class Client {
 		Socket socket;
 		int result = -1;
 		int portS;
-		
+
 		//System.out.println("Size: " + clients.size());
 
 		try {
 			synchronized (clients) {
-		
-
-			result = checkIfExists(ip);
-
-		}
-		if(result < 0) {
-			
-				node = new Node(new Socket(ip, Integer.parseInt(port)));
-			
-			socket = node.getSocket();
-			portS = socket.getLocalPort()+2;
-			localIp = socket.getLocalAddress().toString().substring(1);
-		}else {
-			node = clients.get(result);
-			socket = node.getSocket();
-			System.out.println(socket);
-			portS = socket.getLocalPort()+2;
-		}
-
-		ObjectOutputStream outStream = node.getOutputStream();
-		//outStream.flush();
-
-		System.out.println(socket.getLocalSocketAddress().toString().substring(1));
-
-		outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
-
-		if(result < 0) {
-			socket.close();
-			outStream.close();
-		}
-		System.out.println(portS);
-		ServerSocket server = new ServerSocket(portS);
-		Node newNode = new Node(server.accept());
-		System.out.println("server: " + newNode.getSocket().getLocalAddress());
-
-		ObjectInputStream in = newNode.getInputStream(); 
-		//fica preso AQUI caso tenhamos 1+ clientes
-
-		//System.out.println("resposta " );
-		int response = (int)in.readObject();
 
 
-		if(response == 1) {
-
-
-			synchronized (clients) {
-
-				toAdd.add(newNode);
-				System.out.println("entrou");
+				result = checkIfExists(ip);
 
 			}
-		}else {
-			//System.out.println("Errors");
-			newNode.close();
+			if(result < 0) {
 
-		}
-		server.close();
+				node = new Node(new Socket(ip, Integer.parseInt(port)));
+
+				socket = node.getSocket();
+				portS = socket.getLocalPort()+2;
+				localIp = socket.getLocalAddress().toString().substring(1);
+			}else {
+				node = clients.get(result);
+				socket = node.getSocket();
+				System.out.println(socket);
+				portS = socket.getLocalPort()+2;
+			}
+
+			ObjectOutputStream outStream = node.getOutputStream();
+			//outStream.flush();
+
+			System.out.println(socket.getLocalSocketAddress().toString().substring(1));
+
+			outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
+
+			if(result < 0) {
+				node.close();
+			}
+			System.out.println(portS);
+			ServerSocket server = new ServerSocket(portS);
+			Node newNode = new Node(server.accept());
+			System.out.println("server: " + newNode.getSocket().getLocalAddress());
+
+			ObjectInputStream in = newNode.getInputStream(); 
+			//fica preso AQUI caso tenhamos 1+ clientes
+
+			//System.out.println("resposta " );
+			int response = (int)in.readObject();
+
+
+			if(response == 1) {
+
+
+				synchronized (clients) {
+
+					clients.add(newNode);
+					new Listen(newNode).start();
+					System.out.println("entrou");
+
+				}
+			}else {
+				System.out.println("Errors");
+				newNode.close();
+
+			}
+			server.close();
 		} catch (NumberFormatException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -330,7 +323,7 @@ public class Client {
 			e.printStackTrace();
 		}
 
-		
+
 
 	}
 
@@ -371,7 +364,7 @@ public class Client {
 			Node nodeAceite = null;
 			Node nodeRemoved;
 			int idStreamCrashed = 0;
-			
+
 			while(true) {
 				try {
 					//System.out.println("antes de ligar: " + this.socket);
@@ -414,25 +407,22 @@ public class Client {
 								if(result < 0) {
 
 									if(!address[0].equals(localIp)) {
-										Node newVizinho = null;
-										try {
-											System.out.println("adicionar");
-										newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
-										} catch (Exception e) {
-											e.printStackTrace();
-											// TODO: handle exception
-										}
+
+										
+
+										System.out.println("adicionar");
+										Node newNode = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
+										new Listen(newNode).start();
+										clients.add(newNode);
 										int port = (Integer.parseInt(address[1])+2);
 										System.out.println(address[0] + ":" + port);
 										//System.out.println(newVizinho.getSocket().getRemoteSocketAddress().toString());
-										
-										
-										toAdd.add(newVizinho);
 
+										
 										//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
-										ObjectOutputStream outStream = newVizinho.getOutputStream();
-										//outStream.flush();
-										outStream.writeObject(1);
+										
+										newNode.Accepted();
+										
 										//System.out.println("Close: " + newVizinho.isClosed());
 									}else {
 										result = 0;
@@ -536,96 +526,79 @@ public class Client {
 	 */
 	private static class Listen extends Thread implements Runnable{
 
-		public Listen() {}
+		private Node node;
+		private ObjectInputStream in;
+		private int idStreamRemoved;
 
-		
-		
+		public Listen(Node n) {
+			this.node = n;
+			this.in = node.getInputStream();
+			idStreamRemoved = -1;
+		}
+
+
+
 		@SuppressWarnings("unused")
 		@Override
 		public void run() {
-			//boolean run = true;
-			Node nodeRemoved = null;
-			int idStreamCrashed = 0;
+
 			while(true) {
 
-				System.out.print(""); //ISTO SO CORRE POR CAUSA DISTO!!!
+				try {
 
-				for(Node node : clients) {
-					ObjectInputStream in;
-					try {
-						//System.out.println("before in");
+					String recebido = (String) in.readObject();
+					System.out.println("we got: " + recebido);
+					String[] info = new String[1];
 
-						in = node.getInputStream();
-						
-						String recebido;
+					if(recebido.contains(",")) {
+						info = recebido.split(",");
+					}else {
+						int val = (int)recebido.charAt(0);
+						info[0] = val+"";
+					}
 
-						if(!(recebido = (String) in.readObject()).equals("")) {
-						String[] info = new String[1];
+					switch (info[0]) {
+					case "RandomWalk":
+						System.out.println("random time");
 
+						int result = -1;
+						String[] address = info[2].split(":");
+						if(clients.size() < MAX_CLIENT_SIZE) {
 
+							System.out.println("size: " + clients.size());
+							System.out.println(address[0] + " " + Integer.parseInt(address[1]));
 
-						if(recebido.contains(",")) {
-							info = recebido.split(",");
-						}else {
-							int val = (int)recebido.charAt(0);
-							info[0] = val+"";
-						}
-
-						switch (info[0]) {
-						case "RandomWalk":
-							System.out.println("random time");
-
-							int result = -1;
-							String[] address = info[2].split(":");
-							if(clients.size() < MAX_CLIENT_SIZE) {
-
-								System.out.println("size: " + clients.size());
-								System.out.println(address[0] + " " + Integer.parseInt(address[1]));
-
-								result = checkIfExists(address[0]);
+							result = checkIfExists(address[0]);
 
 
-								synchronized (clients) {
+							synchronized (clients) {
 
-									if(result < 0) {
-										System.out.println("listen: " + address[1]);
-										if(!address[0].equals(localIp)) {
-											Node newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));										
-											toAdd.add(newVizinho);
-											ObjectOutputStream outStream = newVizinho.getOutputStream();
-											//outStream.flush();
-											outStream.writeObject(1);
-										}else {
-											result = 0;
-										}
-										//clients.add(newVizinho);
-										//newVizinho = new Socket(address[0], Integer.parseInt(address[1])+2);
-										//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
-
-										//outStream.close();//fechar a socket que manda a resposta
-										//newVizinho.close();
+								if(result < 0) {
+									System.out.println("listen: " + address[1]);
+									if(!address[0].equals(localIp)) {
+										Node node = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
+										clients.add(node);
+										new Listen(node);
+									}else {
+										result = 0;
 									}
-
-								}
+									}
 							}
-							if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
+						}
+						if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
 
-								int ttl = Integer.parseInt(info[1]) - 1;
-								System.out.println("TTL: "+ ttl);
-								if(ttl > 0) {
-									//System.out.println("TTL GOOD");
-									Random r = new Random();
-									Node reencaminhar = clients.get(r.nextInt(clients.size()));
-									//System.out.println("porta de resposta port=" + socket.getRemoteSocketAddress());
-									ObjectOutputStream out = reencaminhar.getOutputStream();
-									//out.flush();
-									out.writeObject("RandomWalk," + ttl + "," + info[2]);
-									//System.out.println("mandei");
-								}else {
-									//System.out.println("TTL BAD");
-									Node newVizinho;
-									ObjectOutputStream out;
-									/*if(result >= 0) {
+							int ttl = Integer.parseInt(info[1]) - 1;
+							System.out.println("TTL: "+ ttl);
+							if(ttl > 0) {
+								//System.out.println("TTL GOOD");
+								Random r = new Random();
+								Node reencaminhar = clients.get(r.nextInt(clients.size()));
+								//System.out.println("porta de resposta port=" + socket.getRemoteSocketAddress());
+								reencaminhar.RandomWalk("RandomWalk," + ttl + "," + info[2]);
+								//System.out.println("mandei");
+							}else {
+								//System.out.println("TTL BAD");
+								/*if(result >= 0) {
 										newVizinho = clients.get(result);
 										out = new ObjectOutputStream(newVizinho.getOutputStream());
 										out.writeObject(-1);
@@ -637,187 +610,177 @@ public class Client {
 										out.close();
 									}*/
 
-									//System.out.println("test: " + address[1] + "ttl: " + ttl);
-									newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
+								//System.out.println("test: " + address[1] + "ttl: " + ttl);
+								Node newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
 
-									out = newVizinho.getOutputStream();
-									//out.flush();
-
-									out.writeObject(-1);
-
-									//System.out.println("mandei2");
-
-									//System.out.println("test: " + (Integer.parseInt(address[1])+2));
-
-									newVizinho.close();
-								}
-							}
-
-							break;
-
-						case "Gossip":
-							List<String> listStreams = tabela.get(Integer.parseInt(info[1]));
-							if(listStreams != null) {
-								if(listStreams.size() < 3) {
-									if(!listStreams.contains(info[2])) {
-										listStreams.add(info[2]);
-									}
-								}
-							}else {
-								listStreams = new ArrayList<String>();
-								listStreams.add(info[2]);
-								tabela.put(Integer.parseInt(info[1]), listStreams);
-							}
-							int currentTTL = Integer.parseInt(info[3])-1;
-							if(currentTTL >= 0) {
-								informaVizinhos(info[0]+ "," + info[1]+ "," + info[2] + "," + currentTTL);
-							}
-							//System.out.println(info[0]+ "," + info[1]+ "," + info[2] + "," + currentTTL);
-							break;
-						case "Visualizar":
-							//System.out.println("Este adicionou me :" + socket);
-							viewers.add(node);
-							break;
-
-						case "End":
-							tabela.remove(Integer.parseInt(info[1]));
-							System.out.println("Acabou a transmissao " + info[1]);
-							if((Integer.parseInt(info[2])-1) >= 0) {
-								informaVizinhos(info[0]+ "," + info[1]+ "," + (Integer.parseInt(info[2])-1));
-							}
-							synchronized(streams) {
-								streams.remove((Integer)Integer.parseInt(info[1]));//id do canal a remover
-							}
-							break;
-						default:
-							//Caso que recebe dados de uma transmissao
-							int i = info[1].charAt(0);
-							buffer.add(i);
-							idStreamCrashed = i;
-							//System.out.println("recebido " + i);
-							for(Node n : viewers) {
-								ObjectOutputStream out = n.getOutputStream();
+								ObjectOutputStream out = newVizinho.getOutputStream();
 								//out.flush();
-								out.writeObject(recebido);
-							}
-							break;
-						}
-						}
-						//in.close();
-					} catch (ClassNotFoundException e) {
-						e.printStackTrace();
-					} catch (SocketException e) { //socket exception
-						//e.printStackTrace();
-						System.out.println("entrou aqui listen");
-						nodeRemoved = node;
-						toRemove.add(nodeRemoved);
-						String[] addressToRemove = nodeRemoved.getSocket().getRemoteSocketAddress().toString().split(":");
 
-						if(removeStreamerTable(idStreamCrashed, addressToRemove[0])) {
-							visualizarStream(idStreamCrashed); //em teoria vai buscar outro streamer
+								out.writeObject(-1);
+
+								//System.out.println("mandei2");
+
+								//System.out.println("test: " + (Integer.parseInt(address[1])+2));
+
+								newVizinho.close();
+							}
 						}
 
 						break;
-					} catch (IOException e) {
-						e.printStackTrace();
+
+					case "Gossip":
+						List<String> listStreams = tabela.get(Integer.parseInt(info[1]));
+						if(listStreams != null) {
+							if(listStreams.size() < 3) {
+								if(!listStreams.contains(info[2])) {
+									listStreams.add(info[2]);
+								}
+							}
+						}else {
+							listStreams = new ArrayList<String>();
+							listStreams.add(info[2]);
+							tabela.put(Integer.parseInt(info[1]), listStreams);
+						}
+						int currentTTL = Integer.parseInt(info[3])-1;
+						if(currentTTL >= 0) {
+							informaVizinhos(info[0]+ "," + info[1]+ "," + info[2] + "," + currentTTL);
+						}
+						//System.out.println(info[0]+ "," + info[1]+ "," + info[2] + "," + currentTTL);
+						break;
+					case "Visualizar":
+						//System.out.println("Este adicionou me :" + socket);
+						viewers.add(node);
+						break;
+
+					case "End":
+						tabela.remove(Integer.parseInt(info[1]));
+						System.out.println("Acabou a transmissao " + info[1]);
+						if((Integer.parseInt(info[2])-1) >= 0) {
+							informaVizinhos(info[0]+ "," + info[1]+ "," + (Integer.parseInt(info[2])-1));
+						}
+						synchronized(streams) {
+							streams.remove((Integer)Integer.parseInt(info[1]));//id do canal a remover
+						}
+						break;
+					default:
+						//Caso que recebe dados de uma transmissao
+						int i = info[1].charAt(0);
+						buffer.add(i);
+						idStreamRemoved = i;
+						//System.out.println("recebido " + i);
+						for(Node n : viewers) {
+							ObjectOutputStream out = n.getOutputStream();
+							out.writeObject(recebido);
+						}
+						break;
 					}
 
+				//in.close();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			} catch (SocketException e) { //socket exception
+				//e.printStackTrace();
+				System.out.println("entrou aqui listen");
+				clients.remove(node);
+				String[] addressToRemove = node.getSocket().getRemoteSocketAddress().toString().split(":");
+
+				viewers.remove(node);
+				if(removeStreamerTable(idStreamRemoved, addressToRemove[0])) {
+					visualizarStream(idStreamRemoved); //em teoria vai buscar outro streamer
 				}
 
-				clients.addAll(toAdd);
-				clients.removeAll(toRemove);
-				toAdd.removeAll(toAdd);
-				toRemove.removeAll(toRemove);
-				//viewers.removeAll(toRemove);
-				//clients.remove(socketRemoved);
-				viewers.remove(nodeRemoved);
+				break;
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-		}
+
+		}		
+	}
+}
+
+private static class Transmit extends Thread implements Runnable{
+
+	private char[] arrToTransmit;
+	private int streamId;
+
+	public Transmit(char[] arr, int id) {
+		viewers = new ArrayList<>();
+		arrToTransmit = arr;
+		this.streamId = id;
 	}
 
-	private static class Transmit extends Thread implements Runnable{
+	@Override
+	public void run() {
 
-		private char[] arrToTransmit;
-		private int streamId;
+		//			arrToTransmit[0]++;
+		Node nodeRemoved = null;
+		//int counter = 0;
 
-		public Transmit(char[] arr, int id) {
-			viewers = new ArrayList<>();
-			arrToTransmit = arr;
-			this.streamId = id;
-		}
-
-		@Override
-		public void run() {
-
-			//			arrToTransmit[0]++;
-			Node nodeRemoved = null;
-			//int counter = 0;
-
-			for(char c : arrToTransmit) {
-				//System.out.println("entre os for's " + viewers.size());
-				for(Node viewer : viewers) {
-					ObjectOutputStream out = null;
-					try {
-						out = viewer.getOutputStream();
-						//out.flush();
-						int val = (int)c;
-						System.out.println("enviado: " + val);
-						out.writeObject("Stream,"+c+"," + this.streamId);
-						//out.writeObject(val+""); //precisas de enviar 1000 bytes
-					} catch (IOException e) {
-						nodeRemoved = viewer;
-						break;
-					}
-				}
-				viewers.remove(nodeRemoved);
-				clients.remove(nodeRemoved);
+		for(char c : arrToTransmit) {
+			//System.out.println("entre os for's " + viewers.size());
+			for(Node viewer : viewers) {
+				ObjectOutputStream out = null;
 				try {
-					Thread.sleep(50);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+					out = viewer.getOutputStream();
+					//out.flush();
+					int val = (int)c;
+					System.out.println("enviado: " + val);
+					out.writeObject("Stream,"+c+"," + this.streamId);
+					//out.writeObject(val+""); //precisas de enviar 1000 bytes
+				} catch (IOException e) {
+					nodeRemoved = viewer;
+					break;
 				}
-				/*counter++;
+			}
+			viewers.remove(nodeRemoved);
+			clients.remove(nodeRemoved);
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			/*counter++;
 				if(counter % 50 == 0) {
 					informaVizinhos("Gossip," + streamId + "," + localIp + "," + TTL);
 					counter = 0;
 				}*/
-			}
-			System.out.println("Acabou de transmitir");
 		}
+		System.out.println("Acabou de transmitir");
+	}
+}
+
+private static class SporadicGossip extends Thread implements Runnable{
+
+	public SporadicGossip(){
 	}
 
-	private static class SporadicGossip extends Thread implements Runnable{
+	@Override
+	public void run() {
 
-		public SporadicGossip(){
-		}
+		Random r = new Random();
 
-		@Override
-		public void run() {
-			
-			Random r = new Random();
-
-			while(true) {
-				if(clients.size() > 0 && clients.size() < MAX_CLIENT_SIZE - 15) {
-					for (int i = 0; i < 15; i++) {
-						Node n = clients.get(r.nextInt(clients.size()));
-						String[] info = n.getSocket().getRemoteSocketAddress().toString().substring(1).split(":");
-						try {
-							randomWalk(info[0], info[1]);
-						} catch (NumberFormatException e) {
-							e.printStackTrace();
-						}
+		while(true) {
+			if(clients.size() > 0 && clients.size() < MAX_CLIENT_SIZE - 15) {
+				for (int i = 0; i < 15; i++) {
+					Node n = clients.get(r.nextInt(clients.size()));
+					String[] info = n.getSocket().getRemoteSocketAddress().toString().substring(1).split(":");
+					try {
+						randomWalk(info[0], info[1]);
+					} catch (NumberFormatException e) {
+						e.printStackTrace();
 					}
 				}
-				for(int idStream : streams) {
-					informaVizinhos("Gossip," + idStream + "," + localIp + "," + TTL);
-				}
-				try {
-					Thread.sleep(TIME_TO_GOSSIP);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}//faz gossip a cada 5s
 			}
+			for(int idStream : streams) {
+				informaVizinhos("Gossip," + idStream + "," + localIp + "," + TTL);
+			}
+			try {
+				Thread.sleep(TIME_TO_GOSSIP);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}//faz gossip a cada 5s
 		}
-
 	}
+
+}
 }
