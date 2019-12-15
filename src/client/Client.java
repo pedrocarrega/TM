@@ -433,14 +433,11 @@ public class Client {
 								/*if(result >= 0) {
 									newVizinho = clients.get(result);
 									out = new ObjectOutputStream(newVizinho.getOutputStream());
-
 									out.writeObject(-1);
 								}else {
 									newVizinho = new Socket(address[0], Integer.parseInt(address[1]));
 									out = new ObjectOutputStream(newVizinho.getOutputStream());
-
 									out.writeObject(-1);
-
 									newVizinho.close();
 									out.close();
 								}*/
@@ -538,13 +535,11 @@ public class Client {
 						}
 
 						in = node.getInputStream();
-						
 						//in.reset();
 
 						String recebido = (String) in.readObject();
 						String[] info = new String[1];
 
-						
 
 
 						if(recebido.contains(",")) {
@@ -553,8 +548,6 @@ public class Client {
 							int val = (int)recebido.charAt(0);
 							info[0] = val+"";
 						}
-						
-						System.out.println("TTL = " + info[1] + " ip = " + info[2]);
 
 						switch (info[0]) {
 						case "RandomWalk":
@@ -611,14 +604,11 @@ public class Client {
 									/*if(result >= 0) {
 										newVizinho = clients.get(result);
 										out = new ObjectOutputStream(newVizinho.getOutputStream());
-
 										out.writeObject(-1);
 									}else {
 										newVizinho = new Socket(address[0], Integer.parseInt(address[1])+1);
 										out = new ObjectOutputStream(newVizinho.getOutputStream());
-
 										out.writeObject(-1);
-
 										newVizinho.close();
 										out.close();
 									}*/
