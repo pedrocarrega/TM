@@ -270,6 +270,7 @@ public class Client {
 
 			System.out.println(socket.getLocalSocketAddress().toString().substring(1));
 
+			
 			outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
 
 			if(result < 0) {
