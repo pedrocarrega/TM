@@ -116,7 +116,9 @@ public class Client {
 	private static void verStream(int escolhaVis) throws InterruptedException {
 		do{
 			if(!buffer.isEmpty()) {
-				System.out.println("Recebi " + buffer.remove());
+				//System.out.println("Recebi " + buffer.remove());
+				buffer.remove();
+				System.out.println("Viewers: " + viewers.size());
 			}
 			Thread.sleep(TIME_BETWEEN_FRAMES);
 		}while (tabela.containsKey(escolhaVis) || !buffer.isEmpty());
@@ -202,7 +204,7 @@ public class Client {
 				streamer = clients.get(response);
 			}else {
 				try {
-					streamer = new Node(new Socket(streamerEscolhido, 12345));
+					streamer = new Node(new Socket(streamerEscolhido, 12345), true);
 					clients.add(streamer);
 					new Listen(streamer).start();
 				} catch (IOException e) {
@@ -215,6 +217,7 @@ public class Client {
 				for(int i = 0; i < 3; i++) {
 					out.writeObject("Visualizar,");
 				}
+				streamer.setWatching(true);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -526,7 +529,6 @@ public class Client {
 	private static class Listen extends Thread implements Runnable{
 
 		private LocalTime startTime;
-		private boolean watching;
 		private Node node;
 		private ObjectInputStream in;
 		private int idStreamRemoved;
@@ -536,7 +538,6 @@ public class Client {
 			this.in = node.getInputStream();
 			idStreamRemoved = -1;
 			this.in.mark(Integer.MAX_VALUE);
-			watching = false;
 		}
 
 
@@ -546,7 +547,7 @@ public class Client {
 
 			while(run) {
 				
-				if(watching) {
+				if(node.isWatching()) {
 					if(LocalTime.now().getSecond() - startTime.getSecond() > TIMEOUT) {
 						try {
 							node.getOutputStream().writeObject("Bad,");
@@ -560,7 +561,7 @@ public class Client {
 				try {
 
 					String recebido = (String) in.readObject();
-					//System.out.println("we got: " + recebido);
+					System.out.println("we got: " + recebido);
 					String[] info = new String[1];
 
 					if(recebido.contains(",")) {
