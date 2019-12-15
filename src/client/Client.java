@@ -206,7 +206,9 @@ public class Client {
 			//System.out.println("Stream: " + streamer);
 			try {
 				ObjectOutputStream out = streamer.getOutputStream();
+				for(int i = 0; i < 3; i++) {
 				out.writeObject("Visualizar,");
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -454,7 +456,11 @@ public class Client {
 						}
 						break;
 					case "Visualizar":
-						viewers.add(nodeAceite);
+						synchronized (viewers) {
+							if(!viewers.contains(nodeAceite)) {
+								viewers.add(nodeAceite);
+							}
+						}
 						break;
 					default:
 						synchronized(clients) {
@@ -641,7 +647,9 @@ public class Client {
 					case "Visualizar":
 						System.out.println("Este adicionou me :" + node.getSocket());
 						synchronized (viewers) {
+							if(!viewers.contains(node)) {
 							viewers.add(node);
+							}
 						}
 						System.out.println("viewers: " + viewers.size());
 						break;
