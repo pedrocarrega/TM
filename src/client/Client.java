@@ -170,7 +170,7 @@ public class Client {
 					try {
 						ObjectOutputStream out = temp.getOutputStream();
 						//out.flush();
-						out.writeChars(string);
+						out.writeObject(string);
 					} catch (IOException e) {
 						toRemove.add(temp);
 						e.printStackTrace();
@@ -206,7 +206,7 @@ public class Client {
 			//System.out.println("Stream: " + streamer);
 			try {
 				ObjectOutputStream out = streamer.getOutputStream();
-				out.writeChars("Visualizar,");
+				out.writeObject("Visualizar,");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -270,8 +270,8 @@ public class Client {
 
 			System.out.println(socket.getLocalSocketAddress().toString().substring(1));
 
-
-			outStream.writeChars("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
+			
+			outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
 
 			if(result < 0) {
 				node.close();
@@ -285,7 +285,7 @@ public class Client {
 			//fica preso AQUI caso tenhamos 1+ clientes
 
 			//System.out.println("resposta " );
-			int response = in.readInt();
+			int response = (int)in.readObject();
 
 
 			if(response == 1) {
@@ -305,6 +305,8 @@ public class Client {
 			}
 			server.close();
 		} catch (NumberFormatException | IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
 
@@ -343,7 +345,6 @@ public class Client {
 			}
 		}
 
-		@SuppressWarnings("deprecation")
 		@Override
 		public void run() {
 
@@ -364,7 +365,7 @@ public class Client {
 
 					//String[] info = ((String)inStream.readObject()).split(",");
 					//System.out.println(info[2]);
-					String recebido = inStream.readLine();
+					String recebido = (String) inStream.readObject();
 					String[] info = new String[1];
 
 
@@ -425,7 +426,7 @@ public class Client {
 								//System.out.println("vou mandar");
 								ObjectOutputStream out = reencaminhar.getOutputStream();
 								//out.flush();
-								out.writeChars("RandomWalk," + ttl + "," + info[2]);
+								out.writeObject("RandomWalk," + ttl + "," + info[2]);
 							}else {
 								//System.out.println("Fuck ttl");
 								Node newVizinho;
@@ -445,7 +446,7 @@ public class Client {
 								out = newVizinho.getOutputStream();
 								//out.flush();
 
-								out.writeInt(-1);
+								out.writeObject(-1);
 
 								newVizinho.close();
 							}
@@ -465,10 +466,12 @@ public class Client {
 						for(Node n : viewers) {
 							ObjectOutputStream out = n.getOutputStream();
 							//out.flush();
-							out.writeChars(info[1]);
+							out.writeObject(info[1]);
 						}							
 						break;
 					}
+				} catch ( ClassNotFoundException e) {
+					e.printStackTrace();
 				} catch (SocketException e) {
 					//System.out.println("entrou aqui simple server");
 					nodeRemoved = nodeAceite;
@@ -522,7 +525,6 @@ public class Client {
 
 
 
-		@SuppressWarnings("deprecation")
 		@Override
 		public void run() {
 
@@ -530,7 +532,7 @@ public class Client {
 
 				try {
 
-					String recebido = in.readLine();
+					String recebido = (String) in.readObject();
 					//System.out.println("we got: " + recebido);
 					String[] info = new String[1];
 
@@ -604,7 +606,7 @@ public class Client {
 								ObjectOutputStream out = newVizinho.getOutputStream();
 								//out.flush();
 
-								out.writeInt(-1);
+								out.writeObject(-1);
 
 								//System.out.println("mandei2");
 
@@ -658,12 +660,14 @@ public class Client {
 						//System.out.println("recebido " + i);
 						for(Node n : viewers) {
 							ObjectOutputStream out = n.getOutputStream();
-							out.writeChars(recebido);
+							out.writeObject(recebido);
 						}
 						break;
 					}
 
 				//in.close();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
 			} catch (SocketException e) { //socket exception
 				e.printStackTrace();
 				System.out.println("entrou aqui listen" + node.getSocket());
@@ -713,7 +717,7 @@ private static class Transmit extends Thread implements Runnable{
 					//out.flush();
 					int val = (int)c;
 					//System.out.println("enviado: " + val);
-					out.writeChars("Stream,"+c+"," + this.streamId);
+					out.writeObject("Stream,"+c+"," + this.streamId);
 					//out.writeObject(val+""); //precisas de enviar 1000 bytes
 				} catch (IOException e) {
 					nodeRemoved = viewer;
