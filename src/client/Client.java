@@ -14,9 +14,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.time.LocalTime;
 
 public class Client {
 
+	private static int streamer = -1;
+	private static int status = 1;
+	private static boolean run = true;
 	private static final long TIME_BETWEEN_FRAMES = 50;
 	private static final int TTL = 5;
 	private static List<Node> viewers = new ArrayList<>();
@@ -29,6 +33,7 @@ public class Client {
 	private static String localIp;
 	private final static int probToGossip = 70;
 	private static final long DELAY_TIME = 2000;
+	private static final int TIMEOUT = 30;
 	private static List<Integer> streams = new ArrayList<>();
 	private static int TIME_TO_GOSSIP = 15000; //5s por cada gossip
 	private static LinkedBlockingQueue<Integer> buffer = new LinkedBlockingQueue<>();
@@ -37,7 +42,7 @@ public class Client {
 
 		Scanner sc = new Scanner(System.in);
 		//System.out.println("1 - Watch Stream\n2 - Host Stream \nChoose your action: ");
-		
+
 		if(args.length > 0) {
 			String initialIp = args[0];
 			String initialPort = args[1];
@@ -53,7 +58,7 @@ public class Client {
 		}
 		SimpleServer server = new SimpleServer(12345);
 		server.start();
-		
+
 
 		//SporadicGossip gossipTemporal = new SporadicGossip();//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
 		//gossipTemporal.start();
@@ -103,6 +108,7 @@ public class Client {
 			}
 		}
 
+		run = false;
 		sc.close();
 	}
 
@@ -207,7 +213,7 @@ public class Client {
 			try {
 				ObjectOutputStream out = streamer.getOutputStream();
 				for(int i = 0; i < 3; i++) {
-				out.writeObject("Visualizar,");
+					out.writeObject("Visualizar,");
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -272,7 +278,7 @@ public class Client {
 
 			System.out.println(socket.getLocalSocketAddress().toString().substring(1));
 
-			
+
 			outStream.writeObject("RandomWalk," + TTL + "," + socket.getLocalSocketAddress().toString().substring(1));
 
 			if(result < 0) {
@@ -351,10 +357,10 @@ public class Client {
 		public void run() {
 
 			Node nodeAceite = null;
-			Node nodeRemoved;
+			Node nodeRemoved = null;
 			int idStreamCrashed = 0;
 
-			while(true) {
+			while(run) {
 				try {
 					//System.out.println("antes de ligar: " + this.socket);
 					nodeAceite = new Node(this.socket.accept());
@@ -397,7 +403,7 @@ public class Client {
 
 									if(!address[0].equals(localIp)) {
 
-										
+
 
 										System.out.println("adicionar");
 										Node newNode = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
@@ -407,11 +413,11 @@ public class Client {
 										System.out.println(address[0] + ":" + port);
 										//System.out.println(newVizinho.getSocket().getRemoteSocketAddress().toString());
 
-										
+
 										//System.out.println("tenho fome: " + newVizinho.getRemoteSocketAddress().toString().substring(1));
-										
+
 										newNode.accepted();
-										
+
 										//System.out.println("Close: " + newVizinho.isClosed());
 									}else {
 										result = 0;
@@ -519,6 +525,8 @@ public class Client {
 	 */
 	private static class Listen extends Thread implements Runnable{
 
+		private LocalTime startTime;
+		private boolean watching;
 		private Node node;
 		private ObjectInputStream in;
 		private int idStreamRemoved;
@@ -528,6 +536,7 @@ public class Client {
 			this.in = node.getInputStream();
 			idStreamRemoved = -1;
 			this.in.mark(Integer.MAX_VALUE);
+			watching = false;
 		}
 
 
@@ -535,7 +544,18 @@ public class Client {
 		@Override
 		public void run() {
 
-			while(true) {
+			while(run) {
+				
+				if(watching) {
+					if(LocalTime.now().getSecond() - startTime.getSecond() > TIMEOUT) {
+						try {
+							node.getOutputStream().writeObject("Bad,");
+						} catch (IOException e) {
+							//e.printStackTrace();
+						}
+						startTime = LocalTime.now();
+					}
+				}
 
 				try {
 
@@ -576,7 +596,7 @@ public class Client {
 									}else {
 										result = 0;
 									}
-									}
+								}
 							}
 						}
 						if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
@@ -648,7 +668,7 @@ public class Client {
 						System.out.println("Este adicionou me :" + node.getSocket());
 						synchronized (viewers) {
 							if(!viewers.contains(node)) {
-							viewers.add(node);
+								viewers.add(node);
 							}
 						}
 						System.out.println("viewers: " + viewers.size());
@@ -664,6 +684,12 @@ public class Client {
 							streams.remove((Integer)Integer.parseInt(info[1]));//id do canal a remover
 						}
 						break;
+					case "Bad":
+						status--;
+						if(status == -1) {
+							run = false;
+						}
+						break;
 					default:
 						//Caso que recebe dados de uma transmissao
 						int i = info[1].charAt(0);
@@ -677,124 +703,127 @@ public class Client {
 						break;
 					}
 
-				//in.close();
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-			} catch (SocketException e) { //socket exception
-				e.printStackTrace();
-				System.out.println("entrou aqui listen" + node.getSocket());
-				clients.remove(node);
-				String[] addressToRemove = node.getSocket().getRemoteSocketAddress().toString().split(":");
+					//in.close();
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				} catch (SocketException e) { //socket exception
+					e.printStackTrace();
+					System.out.println("entrou aqui listen" + node.getSocket());
+					clients.remove(node);
+					String[] addressToRemove = node.getSocket().getRemoteSocketAddress().toString().split(":");
 
-				viewers.remove(node);
-				if(removeStreamerTable(idStreamRemoved, addressToRemove[0])) {
-					visualizarStream(idStreamRemoved); //em teoria vai buscar outro streamer
+					viewers.remove(node);
+					if(removeStreamerTable(idStreamRemoved, addressToRemove[0])) {
+						visualizarStream(idStreamRemoved); //em teoria vai buscar outro streamer
+					}
+
+					break;
+				} catch (IOException e) {
+					//e.printStackTrace();
+					try {
+						in.reset();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
 				}
 
-				break;
+			}
+			try {
+				this.node.close();
 			} catch (IOException e) {
 				//e.printStackTrace();
-				try {
-					in.reset();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
 			}
-
-		}		
-	}
-}
-
-private static class Transmit extends Thread implements Runnable{
-
-	private char[] arrToTransmit;
-	private int streamId;
-
-	public Transmit(char[] arr, int id) {
-		viewers = new ArrayList<>();
-		arrToTransmit = arr;
-		this.streamId = id;
+		}
 	}
 
-	@Override
-	public void run() {
+	private static class Transmit extends Thread implements Runnable{
 
-		//arrToTransmit[0]++;
-		Node nodeRemoved = null;
-		//int counter = 0;
-		
-		System.out.println("Viewers: " + viewers.size());
+		private char[] arrToTransmit;
+		private int streamId;
 
-		for(char c : arrToTransmit) {
-			//System.out.println("entre os for's " + viewers.size());
-			for(Node viewer : viewers) {
-				ObjectOutputStream out = null;
-				try {
-					out = viewer.getOutputStream();
-					//out.flush();
-					int val = (int)c;
-					//System.out.println("enviado: " + val);
-					out.writeObject("Stream,"+c+"," + this.streamId);
-					//out.writeObject(val+""); //precisas de enviar 1000 bytes
-				} catch (IOException e) {
-					nodeRemoved = viewer;
-					break;
+		public Transmit(char[] arr, int id) {
+			viewers = new ArrayList<>();
+			arrToTransmit = arr;
+			this.streamId = id;
+		}
+
+		@Override
+		public void run() {
+
+			//arrToTransmit[0]++;
+			Node nodeRemoved = null;
+			//int counter = 0;
+
+			System.out.println("Viewers: " + viewers.size());
+
+			for(char c : arrToTransmit) {
+				//System.out.println("entre os for's " + viewers.size());
+				for(Node viewer : viewers) {
+					ObjectOutputStream out = null;
+					try {
+						out = viewer.getOutputStream();
+						//out.flush();
+						//int val = (int)c;
+						//System.out.println("enviado: " + val);
+						out.writeObject("Stream,"+c+"," + this.streamId);
+						//out.writeObject(val+""); //precisas de enviar 1000 bytes
+					} catch (IOException e) {
+						nodeRemoved = viewer;
+						break;
+					}
 				}
-			}
-			viewers.remove(nodeRemoved);
-			clients.remove(nodeRemoved);
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			/*counter++;
+				viewers.remove(nodeRemoved);
+				clients.remove(nodeRemoved);
+				try {
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				/*counter++;
 				if(counter % 50 == 0) {
 					informaVizinhos("Gossip," + streamId + "," + localIp + "," + TTL);
 					counter = 0;
 				}*/
+			}
+			System.out.println("Acabou de transmitir");
 		}
-		System.out.println("Acabou de transmitir");
-	}
-}
-
-private static class SporadicGossip extends Thread implements Runnable{
-
-	public SporadicGossip(){
 	}
 
-	@Override
-	public void run() {
-		
-		try {
-			Thread.sleep(10000);
-		
+	private static class SporadicGossip extends Thread implements Runnable{
 
-		Random r = new Random();
+		public SporadicGossip(){
+		}
 
-		while(true) {
-			if(clients.size() > 0 && clients.size() < MAX_CLIENT_SIZE) {
-				for (int i = 0; i < MAX_CLIENT_SIZE-clients.size(); i++) {
-					Node n = clients.get(r.nextInt(clients.size()));
-					String[] info = n.getSocket().getRemoteSocketAddress().toString().substring(1).split(":");
-					try {
-						randomWalk(info[0], info[1]);
-					} catch (NumberFormatException e) {
-						e.printStackTrace();
+		@Override
+		public void run() {
+
+			try {
+
+				Random r = new Random();
+
+				while(run) {
+
+					Thread.sleep(TIME_TO_GOSSIP); //faz gossip a cada 15s
+
+					if(clients.size() > 0 && clients.size() < MAX_CLIENT_SIZE) {
+						for (int i = 0; i < MAX_CLIENT_SIZE-clients.size(); i++) {
+							Node n = clients.get(r.nextInt(clients.size()));
+							String[] info = n.getSocket().getRemoteSocketAddress().toString().substring(1).split(":");
+							try {
+								randomWalk(info[0], info[1]);
+							} catch (NumberFormatException e) {
+								e.printStackTrace();
+							}
+						}
+					}
+					for(int idStream : streams) {
+						informaVizinhos("Gossip," + idStream + "," + localIp + "," + TTL);
 					}
 				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
-			for(int idStream : streams) {
-				informaVizinhos("Gossip," + idStream + "," + localIp + "," + TTL);
-			}
-			
-				Thread.sleep(TIME_TO_GOSSIP); //faz gossip a cada 15s
 		}
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
 
-}
+	}
 }
