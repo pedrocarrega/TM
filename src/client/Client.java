@@ -72,13 +72,15 @@ public class Client {
 				
 				
 			}
+			SporadicGossip gossipTemporal = new SporadicGossip(initialIp, Integer.parseInt(initialPort), true);//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
+			gossipTemporal.start();
+		}else {
+			SporadicGossip gossipTemporal = new SporadicGossip("", -1, false);//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
+			gossipTemporal.start();
 		}
 		SimpleServer server = new SimpleServer(12345);
 		server.start();
 
-
-		//SporadicGossip gossipTemporal = new SporadicGossip();//Faz gossip esporadico para avisar novos cliente que stream ele pode transmitir ou retransmitir
-		//gossipTemporal.start();
 
 		String comando;
 		boolean avaliador = true;
@@ -133,9 +135,9 @@ public class Client {
 	private static void verStream(int escolhaVis) throws InterruptedException {
 		do{
 			if(!buffer.isEmpty()) {
-				//System.out.println("Recebi " + buffer.remove());
-				buffer.remove();
-				System.out.println("Viewers: " + viewers.size());
+				System.out.println("Recebi " + buffer.remove());
+				//buffer.remove();
+				//System.out.println("Viewers: " + viewers.size());
 			}
 			Thread.sleep(TIME_BETWEEN_FRAMES);
 		}while (tabela.containsKey(escolhaVis) || !buffer.isEmpty());
@@ -149,7 +151,7 @@ public class Client {
 			informaVizinhos("Gossip," + idCanalTrans + "," + localIp + "," + TTL);
 		}
 
-		int arrSize = 500;
+		int arrSize = 1000;
 		char[] arrayEnviado = new char[arrSize];
 		for(int i = 0; i < arrSize; i++) {
 			arrayEnviado[i] = (char)i;
@@ -387,7 +389,7 @@ public class Client {
 					nodeAceite = new Node(this.socket.accept());
 					localIp = nodeAceite.getSocket().getLocalAddress().toString().substring(1);
 
-					System.out.println("ligou");
+					//System.out.println("ligou");
 
 					ObjectInputStream inStream = nodeAceite.getInputStream();
 
@@ -426,7 +428,7 @@ public class Client {
 
 
 
-										System.out.println("adicionar");
+										//System.out.println("adicionar");
 										Node newNode = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
 										new Listen(newNode).start();
 										clients.add(newNode);
@@ -638,7 +640,7 @@ public class Client {
 						if(result >= 0 || clients.size() >= MAX_CLIENT_SIZE) {
 
 							int ttl = Integer.parseInt(info[1]) - 1;
-							System.out.println("TTL: "+ ttl);
+							//System.out.println("TTL: "+ ttl);
 							if(ttl > 0 && clients.size() > 1) {
 								//System.out.println("TTL GOOD");
 								Random r = new Random();
@@ -812,7 +814,7 @@ public class Client {
 			System.out.println("Viewers: " + viewers.size());
 
 			for(char c : arrToTransmit) {
-				System.out.println("entre os for's " + viewers.size());
+				//traSystem.out.println("entre os for's " + viewers.size());
 				for(Node viewer : viewers) {
 					ObjectOutputStream out = null;
 					try {
@@ -846,7 +848,14 @@ public class Client {
 
 	private static class SporadicGossip extends Thread implements Runnable{
 
-		public SporadicGossip(){
+		private String ip;
+		private int port;
+		private boolean aval;
+		
+		public SporadicGossip(String ip, int port, boolean avaliador){
+			this.ip = ip;
+			this.port = port;
+			this.aval = avaliador;
 		}
 
 		@Override
@@ -871,11 +880,31 @@ public class Client {
 							}
 						}
 					}
+					
+					if(clients.size() == 0 && aval) {
+						Socket temp = new Socket(this.ip,this.port);
+						Node entradaNaRede = new Node(temp);
+						entradaNaRede.randomWalk("RandomWalk," + TTL + "," + temp.getLocalSocketAddress().toString().substring(1) + ",urgent");
+						ServerSocket server = new ServerSocket(temp.getLocalPort()+2);
+						entradaNaRede.close();
+						Node newNode = new Node(server.accept());
+						
+						int response = (int)newNode.getInputStream().readObject();
+						
+						synchronized(clients) {
+							clients.add(newNode);
+						}
+						new Listen(newNode).start();
+						server.close();
+					}
 					for(int idStream : streams) {
 						informaVizinhos("Gossip," + idStream + "," + localIp + "," + TTL);
 					}
 				}
-			} catch (InterruptedException e) {
+			} catch (InterruptedException | IOException e) {
+				//e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
 				//e.printStackTrace();
 			}
 		}
