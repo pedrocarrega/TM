@@ -18,7 +18,6 @@ import java.time.LocalTime;
 
 public class Client {
 
-	private static int streamer = -1;
 	private static int status = 1;
 	private static boolean run = true;
 	private static final long TIME_BETWEEN_FRAMES = 50;
@@ -28,7 +27,7 @@ public class Client {
 	private static List<Node> toRemove = new ArrayList<>();
 	private static List<Node> clients = new ArrayList<>();
 	private static Map<Integer, List<String>> tabela = new HashMap<>();
-	private static final int MAX_CLIENT_SIZE = 3;
+	private static final int MAX_CLIENT_SIZE = 1;
 	private static final int THREASHOLD_VIZINHOS = 5;
 	private static String localIp;
 	private final static int probToGossip = 70;
@@ -52,8 +51,26 @@ public class Client {
 					//System.out.println("random: " + i);
 					randomWalk(initialIp, initialPort);
 				} catch (NumberFormatException e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 				}
+			}
+			if(clients.size() == 0) {
+				Socket temp = new Socket(initialIp,Integer.parseInt(initialPort));
+				Node entradaNaRede = new Node(temp);
+				entradaNaRede.randomWalk("RandomWalk," + TTL + "," + temp.getLocalSocketAddress().toString().substring(1) + ",urgent");
+				ServerSocket server = new ServerSocket(temp.getLocalPort()+2);
+				entradaNaRede.close();
+				Node newNode = new Node(server.accept());
+				
+				int response = (int)newNode.getInputStream().readObject();
+				
+				synchronized(clients) {
+					clients.add(newNode);
+				}
+				new Listen(newNode).start();
+				server.close();
+				
+				
 			}
 		}
 		SimpleServer server = new SimpleServer(12345);
@@ -181,7 +198,7 @@ public class Client {
 						out.writeObject(string);
 					} catch (IOException e) {
 						toRemove.add(temp);
-						e.printStackTrace();
+						//e.printStackTrace();
 					}
 				}
 			}
@@ -208,7 +225,7 @@ public class Client {
 					clients.add(streamer);
 					new Listen(streamer).start();
 				} catch (IOException e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 				}
 			}
 			//System.out.println("Stream: " + streamer);
@@ -217,11 +234,12 @@ public class Client {
 				for(int i = 0; i < 3; i++) {
 					out.writeObject("Visualizar,");
 				}
+				System.out.println("pedi a este: " + streamer.getSocket());
 				streamer.setWatching(true);
+				streamer.updateTimer();
 			} catch (IOException e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
-
 
 			//avisar vizinhos que tb tranmitirei esta stream
 			informaVizinhos("Gossip," + idCanalVis + "," + localIp + "," + TTL);
@@ -306,7 +324,7 @@ public class Client {
 
 					clients.add(newNode);
 					new Listen(newNode).start();
-					System.out.println("entrou");
+					System.out.println("entrou node adicionado no randomWalk = " + newNode.getSocket());
 
 				}
 			}else {
@@ -316,9 +334,9 @@ public class Client {
 			}
 			server.close();
 		} catch (NumberFormatException | IOException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 
 
@@ -351,7 +369,7 @@ public class Client {
 			try {
 				this.socket = new ServerSocket(port);
 			} catch (IOException e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 				//System.out.println("Erro na criacao da server socket");
 			}
 		}
@@ -413,7 +431,7 @@ public class Client {
 										new Listen(newNode).start();
 										clients.add(newNode);
 										int port = (Integer.parseInt(address[1])+2);
-										System.out.println(address[0] + ":" + port);
+										System.out.println("Accept vizinho no simple server " + newNode.getSocket());
 										//System.out.println(newVizinho.getSocket().getRemoteSocketAddress().toString());
 
 
@@ -437,7 +455,11 @@ public class Client {
 								//System.out.println("vou mandar");
 								ObjectOutputStream out = reencaminhar.getOutputStream();
 								//out.flush();
-								out.writeObject("RandomWalk," + ttl + "," + info[2]);
+								if(info.length == 3) {
+									out.writeObject("RandomWalk," + ttl + "," + info[2]);
+								}else {
+									out.writeObject("RandomWalk," + ttl + "," + info[2] + "," + info[3]);
+								}
 							}else {
 								//System.out.println("Fuck ttl");
 								Node newVizinho;
@@ -453,17 +475,26 @@ public class Client {
 									newVizinho.close();
 									out.close();
 								}*/
-								newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
-								out = newVizinho.getOutputStream();
-								//out.flush();
-
-								out.writeObject(-1);
-
-								newVizinho.close();
+								if(info.length == 4) {
+									System.out.println("adicionar");
+									Node newNode = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
+									new Listen(newNode).start();
+									clients.add(newNode);
+									newNode.accepted();
+								}else {
+									newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
+									out = newVizinho.getOutputStream();
+									//out.flush();
+	
+									out.writeObject(-1);
+	
+									newVizinho.close();
+								}
 							}
 
 						}
 						break;
+
 					case "Visualizar":
 						synchronized (viewers) {
 							if(!viewers.contains(nodeAceite)) {
@@ -486,7 +517,7 @@ public class Client {
 						break;
 					}
 				} catch ( ClassNotFoundException e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 				} catch (SocketException e) {
 					//System.out.println("entrou aqui simple server");
 					nodeRemoved = nodeAceite;
@@ -495,7 +526,7 @@ public class Client {
 					visualizarStream(idStreamCrashed);//em teoria vai buscar outro streamer
 					break;
 				} catch (IOException e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 				}
 			}
 			try {
@@ -531,16 +562,14 @@ public class Client {
 	 */
 	private static class Listen extends Thread implements Runnable{
 
-		private LocalTime startTime;
 		private Node node;
 		private ObjectInputStream in;
 		private int idStreamRemoved;
 
-		public Listen(Node n) {
+		public Listen(Node n) throws IOException {
 			this.node = n;
 			this.in = node.getInputStream();
 			idStreamRemoved = -1;
-			this.in.mark(Integer.MAX_VALUE);
 		}
 
 
@@ -548,16 +577,18 @@ public class Client {
 		@Override
 		public void run() {
 
-			while(run) {
-				
+			boolean crash = true;
+			
+			while(run && crash) {
+
 				if(node.isWatching()) {
-					if(LocalTime.now().getSecond() - startTime.getSecond() > TIMEOUT) {
+					if(LocalTime.now().getSecond() - node.getStartTime().getSecond() > TIMEOUT) {
 						try {
 							node.getOutputStream().writeObject("Bad,");
 						} catch (IOException e) {
 							//e.printStackTrace();
 						}
-						startTime = LocalTime.now();
+						node.updateTimer();
 					}
 				}
 
@@ -595,6 +626,7 @@ public class Client {
 									if(!address[0].equals(localIp)) {
 										Node node = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
 										clients.add(node);
+										System.out.println("accept no listen " + node.getSocket());
 										new Listen(node);
 										node.accepted();
 									}else {
@@ -615,7 +647,11 @@ public class Client {
 									reencaminhar = clients.get(r.nextInt(clients.size()));
 								}while(reencaminhar.getSocket().getInetAddress().getHostAddress().equals(address[0]));
 								System.out.println("porta de resposta port=" + info[2]);
-								reencaminhar.randomWalk("RandomWalk," + ttl + "," + info[2]);
+								if(info.length == 3) {
+									reencaminhar.randomWalk("RandomWalk," + ttl + "," + info[2]);
+								}else {
+									reencaminhar.randomWalk("RandomWalk," + ttl + "," + info[2] + "," + info[3]);
+								}
 								//System.out.println("mandei");
 							}else {
 								//System.out.println("TTL BAD");
@@ -632,18 +668,27 @@ public class Client {
 									}*/
 
 								//System.out.println("test: " + address[1] + "ttl: " + ttl);
-								Node newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
-
-								ObjectOutputStream out = newVizinho.getOutputStream();
-								//out.flush();
-
-								out.writeObject(-1);
-
-								//System.out.println("mandei2");
-
-								//System.out.println("test: " + (Integer.parseInt(address[1])+2));
-
-								newVizinho.close();
+								Node newVizinho;
+								ObjectOutputStream out;
+								if(info.length == 4) {
+									System.out.println("adicionar: " + address[0] + ":" + address[1]);
+									Node newNode = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
+									new Listen(newNode).start();
+									clients.add(newNode);
+									newNode.accepted();
+									break;
+								}else {
+									if(localIp.equals(address[0])) {
+										break;
+									}
+									newVizinho = new Node(new Socket(address[0], Integer.parseInt(address[1])+2));
+									out = newVizinho.getOutputStream();
+									//out.flush();
+	
+									out.writeObject(-1);
+	
+									newVizinho.close();
+								}
 							}
 						}
 
@@ -676,6 +721,8 @@ public class Client {
 							}
 						}
 						System.out.println("viewers: " + viewers.size());
+						node.setWatching(true);
+						node.updateTimer();
 						break;
 
 					case "End":
@@ -687,6 +734,12 @@ public class Client {
 						synchronized(streams) {
 							streams.remove((Integer)Integer.parseInt(info[1]));//id do canal a remover
 						}
+						synchronized (viewers) {
+							for(Node n : viewers) {
+								n.setWatching(false);
+							}
+						}
+
 						break;
 					case "Bad":
 						status--;
@@ -699,20 +752,20 @@ public class Client {
 						int i = info[1].charAt(0);
 						buffer.add(i);
 						idStreamRemoved = i;
-						//System.out.println("recebido " + i);
+						System.out.println("recebido " + i);
 						for(Node n : viewers) {
 							ObjectOutputStream out = n.getOutputStream();
 							out.writeObject(recebido);
 						}
-						startTime = LocalTime.now();
+						node.updateTimer();
 						break;
 					}
 
 					//in.close();
 				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 				} catch (SocketException e) { //socket exception
-					e.printStackTrace();
+					//e.printStackTrace();
 					System.out.println("entrou aqui listen" + node.getSocket());
 					clients.remove(node);
 					String[] addressToRemove = node.getSocket().getRemoteSocketAddress().toString().split(":");
@@ -725,11 +778,8 @@ public class Client {
 					break;
 				} catch (IOException e) {
 					//e.printStackTrace();
-					try {
-						in.reset();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
+					crash = false;
+					
 				}
 
 			}
@@ -762,7 +812,7 @@ public class Client {
 			System.out.println("Viewers: " + viewers.size());
 
 			for(char c : arrToTransmit) {
-				//System.out.println("entre os for's " + viewers.size());
+				System.out.println("entre os for's " + viewers.size());
 				for(Node viewer : viewers) {
 					ObjectOutputStream out = null;
 					try {
@@ -782,7 +832,7 @@ public class Client {
 				try {
 					Thread.sleep(50);
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 				}
 				/*counter++;
 				if(counter % 50 == 0) {
@@ -817,7 +867,7 @@ public class Client {
 							try {
 								randomWalk(info[0], info[1]);
 							} catch (NumberFormatException e) {
-								e.printStackTrace();
+								//e.printStackTrace();
 							}
 						}
 					}
@@ -826,7 +876,7 @@ public class Client {
 					}
 				}
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.time.LocalTime;
 
 public class Node {
 	
@@ -11,6 +12,7 @@ public class Node {
 	private ObjectOutputStream out;
 	private ObjectInputStream in;
 	private boolean watching;
+	private LocalTime startTime;
 
 	public Node(Socket socket) throws IOException {
 		this.socket = socket;
@@ -22,6 +24,7 @@ public class Node {
 	public Node(Socket socket, boolean watch){
 		this.socket = socket;
 		this.watching = watch;
+		this.startTime = LocalTime.now();
 	}
 
 	public void close() throws IOException {
@@ -47,16 +50,36 @@ public class Node {
 		return socket;
 	}
 
-	public ObjectOutputStream getOutputStream() {
+	public ObjectOutputStream getOutputStream() throws IOException {
+		if(out == null) {
+			out = new ObjectOutputStream(this.socket.getOutputStream());
+		}
 		return out;
 	}
 
-	public ObjectInputStream getInputStream() {
+	public ObjectInputStream getInputStream() throws IOException {
+		if(in == null) {
+			in = new ObjectInputStream(this.socket.getInputStream());
+		}
 		return in;
+	}
+	
+	public LocalTime getStartTime() {
+		return startTime;
 	}
 
 	public void setWatching(boolean b) {
 		this.watching = b;
+	}
+	
+	public void updateTimer() {
+		this.startTime = LocalTime.now();
+	}
+
+	public void reopenIn() throws IOException {
+		this.in.close();
+		this.in = new ObjectInputStream(this.socket.getInputStream());
+		
 	}
 
 }
